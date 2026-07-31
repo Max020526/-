@@ -1,0 +1,11 @@
+"use client";
+import { useCallback } from "react";
+import Link from "next/link";
+import { ArrowRight, ImageOff } from "lucide-react";
+import { PageHead } from "@/components/shared/page-head";
+import { SetupBanner } from "@/components/shared/setup-banner";
+import { EmptyState } from "@/components/shared/empty-state";
+import { useSupabaseQuery } from "@/hooks/use-supabase-query";
+const EMPTY:any[]=[];
+function missing(p:any){const x=[];if(!p.name)x.push("名称");if(!p.category_id)x.push("分类");if(!p.description)x.push("描述");if(!p.retail_price||Number(p.retail_price)<=0)x.push("价格");if(!p.product_images?.length)x.push("图片");return x;}
+export default function Pending(){const query=useCallback((c:any)=>c.from("products").select("id,style_no,name,category_id,description,retail_price,created_at,product_images(id),product_variants(id)").in("status",["PENDING_DETAILS","PENDING_IMAGES","PENDING_PRICE","PENDING_REVIEW","READY_TO_PUBLISH"]).is("deleted_at",null).order("created_at",{ascending:false}),[]);const {data}=useSupabaseQuery<any[]>(query,EMPTY);return <main className="page"><PageHead eyebrow="PRODUCT COMPLETION" title="待完善商品" subtitle="补齐资料并通过上架检查后，商品才能出现在网店。"/><SetupBanner/><section className="panel">{data.length?<div className="table-wrap"><table className="data-table"><thead><tr><th>商品</th><th>到货日期</th><th>SKU</th><th>缺失项目</th><th>完成度</th><th></th></tr></thead><tbody>{data.map(p=>{const miss=missing(p);const progress=Math.round((5-miss.length)/5*100);return <tr key={p.id}><td><div style={{display:"flex",alignItems:"center",gap:10}}><div className="empty-icon" style={{margin:0,width:36,height:36}}><ImageOff size={16}/></div><div><strong>{p.style_no}</strong><div className="muted">{p.name??"未命名商品"}</div></div></div></td><td>{new Date(p.created_at).toLocaleDateString("zh-CN")}</td><td>{p.product_variants?.length??0}</td><td>{miss.length?miss.map((m:string)=><span className="status warning" key={m} style={{marginRight:4}}>{m}</span>):<span className="status success">已完成</span>}</td><td><strong>{progress}%</strong></td><td><Link className="button small" href={`/admin/products/${p.id}`}>去完善 <ArrowRight size={13}/></Link></td></tr>})}</tbody></table></div>:<EmptyState title="没有待完善商品" description="所有已入库商品都已完成资料检查。"/>}</section></main>}

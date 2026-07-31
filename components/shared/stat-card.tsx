@@ -1,0 +1,2 @@
+import type { LucideIcon } from "lucide-react";
+export function StatCard({ label, value, note, icon:Icon }: {label:string;value:string|number;note?:string;icon:LucideIcon}) { return <div className="stat-card"><div className="stat-top"><span>{label}</span><span className="stat-icon"><Icon size={17}/></span></div><div className="stat-value">{value}</div>{note&&<div className="stat-note">{note}</div>}</div>; }
