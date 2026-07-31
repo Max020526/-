@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, Boxes, ChevronRight, ClipboardList, Home, Image, LayoutDashboard, Menu, PackageCheck, Search, Settings, ShoppingBag, Tags, Truck, Users } from "lucide-react";
+import { Bell, Boxes, ChevronRight, ClipboardList, Home, Image, LayoutDashboard, Menu, PackageCheck, PlusCircle, Search, Settings, ShoppingBag, Tags, Truck, Users } from "lucide-react";
 import type { Portal } from "@/lib/constants";
 
 const nav = {
@@ -12,7 +12,7 @@ const nav = {
   ],
   admin: [
     { section:"工作台", links:[{href:"/admin",label:"仪表盘",icon:LayoutDashboard}]},
-    { section:"商品", links:[{href:"/admin/products/pending",label:"待完善商品",icon:PackageCheck},{href:"/admin/products",label:"全部商品",icon:Boxes},{href:"/admin/categories",label:"商品分类",icon:Tags},{href:"/admin/images",label:"图片管理",icon:Image},{href:"/admin/listings",label:"网店上架",icon:ShoppingBag}]},
+    { section:"商品", links:[{href:"/admin/products/new",label:"新建并上架",icon:PlusCircle},{href:"/admin/products/pending",label:"待完善商品",icon:PackageCheck},{href:"/admin/products",label:"全部商品",icon:Boxes},{href:"/admin/categories",label:"商品分类",icon:Tags},{href:"/admin/images",label:"图片管理",icon:Image},{href:"/admin/listings",label:"网店上架",icon:ShoppingBag}]},
     { section:"业务", links:[{href:"/admin/inventory",label:"库存中心",icon:ClipboardList},{href:"/admin/receipts",label:"入库记录",icon:Truck},{href:"/admin/orders",label:"订单管理",icon:ShoppingBag},{href:"/admin/staff",label:"员工权限",icon:Users},{href:"/admin/settings",label:"系统设置",icon:Settings}]},
   ],
 };

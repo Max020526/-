@@ -42,3 +42,6 @@ next-env.d.ts
 /outputs/
 /work/
 *.tsbuildinfo
+
+# Standalone customer storefront is maintained as its own repository.
+/customer-store/

@@ -804,6 +804,9 @@ export type Database = {
           description: string | null
           id: string
           internal_notes: string | null
+          is_bestseller: boolean
+          is_featured: boolean
+          is_new: boolean
           material: string | null
           name: string | null
           origin: string | null
@@ -833,6 +836,9 @@ export type Database = {
           description?: string | null
           id?: string
           internal_notes?: string | null
+          is_bestseller?: boolean
+          is_featured?: boolean
+          is_new?: boolean
           material?: string | null
           name?: string | null
           origin?: string | null
@@ -862,6 +868,9 @@ export type Database = {
           description?: string | null
           id?: string
           internal_notes?: string | null
+          is_bestseller?: boolean
+          is_featured?: boolean
+          is_new?: boolean
           material?: string | null
           name?: string | null
           origin?: string | null
@@ -1718,6 +1727,10 @@ export type Database = {
         Returns: Json
       }
       publish_product: { Args: { p_product_id: string }; Returns: Json }
+      save_catalog_product: {
+        Args: { p_product_id: string | null; p_product: Json; p_variants: Json }
+        Returns: Json
+      }
       set_inventory_online_limit: {
         Args: { p_inventory_id: string; p_limit: number }
         Returns: Json
@@ -1968,4 +1981,3 @@ export const Constants = {
     },
   },
 } as const
-
