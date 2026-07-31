@@ -121,22 +121,13 @@ export default function NewReceipt() {
     if (!userResult.user) { setMessage("请先登录员工账号。"); setSaving(false); return; }
     const sourceType = ocrScans.length ? "OCR_PHOTO" : sourceFileName ? "SPREADSHEET" : tab === "manual" ? "MANUAL" : "PASTED_TEXT";
     const receiptNotes = [sourceFileName && `导入文件：${sourceFileName}`, notes].filter(Boolean).join("；") || null;
-    const { data: receipt, error } = await client.from("stock_receipts").insert({
-      receipt_date: date, supplier_id: supplierId || null, warehouse_id: warehouseId, source_type: sourceType,
-      status: items.some((item) => item.duplicateKey) ? "PENDING_REVIEW" : "RECEIVING",
-      expected_quantity: summary.total, received_quantity: 0,
-      exception_count: items.filter((item) => item.status !== "VALID").length,
-      notes: receiptNotes, created_by: userResult.user.id,
-    }).select("id").single();
-    if (error || !receipt) { setMessage(error?.message ?? "创建入库单失败，库存未发生变化。"); setSaving(false); return; }
-
     const rawLines = items.map((item, line) => ({
-      receipt_id: receipt.id, line_number: line + 1,
+      line_number: line + 1,
       raw_text: item.rawText || `${item.normalizedStyleNo} ${item.normalizedColor} ${item.normalizedSize} ${item.quantity}`,
       parse_status: "PARSED",
     }));
     const dbItems = items.map((item, itemIndex) => ({
-      receipt_id: receipt.id, raw_line_number: item.lineNumber,
+      raw_line_number: item.lineNumber,
       raw_style_no: item.rawStyleNo || item.normalizedStyleNo, normalized_style_no: item.normalizedStyleNo,
       raw_color: item.rawColor || item.normalizedColor, normalized_color: item.normalizedColor,
       raw_size: item.rawSize || item.normalizedSize, normalized_size: item.normalizedSize,
@@ -144,25 +135,34 @@ export default function NewReceipt() {
       status: item.status === "ERROR" ? "ERROR" : "PENDING", notes: item.error,
       source_metadata: ocrScans[itemIndex]?.result ?? {},
     }));
-    const [{ error: rawError }, { error: itemError }] = await Promise.all([
-      client.from("stock_receipt_raw_lines").insert(rawLines),
-      client.from("stock_receipt_items").insert(dbItems),
-    ]);
-    if (rawError || itemError) { setMessage(rawError?.message ?? itemError?.message ?? "保存解析结果失败"); setSaving(false); return; }
+    const { data: result, error } = await client.rpc("create_stock_receipt", {
+      p_header: {
+        receipt_date: date,
+        supplier_id: supplierId || null,
+        warehouse_id: warehouseId,
+        source_type: sourceType,
+        status: items.some((item) => item.duplicateKey) ? "PENDING_REVIEW" : "RECEIVING",
+        notes: receiptNotes,
+      },
+      p_raw_lines: rawLines,
+      p_items: dbItems,
+    });
+    const receiptId = (result as { receipt_id?: string } | null)?.receipt_id;
+    if (error || !receiptId) { setMessage(error?.message ?? "创建入库单失败，数据未保存。"); setSaving(false); return; }
     if (ocrScans.length) {
       const attachmentRows = [];
       const uploadErrors: string[] = [];
       for (const scan of ocrScans) {
         const extension = (scan.file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
-        const filePath = `${receipt.id}/${crypto.randomUUID()}.${extension}`;
+        const filePath = `${receiptId}/${crypto.randomUUID()}.${extension}`;
         const { error: uploadError } = await client.storage.from("receipt-scans").upload(filePath, scan.file, { contentType: scan.file.type, upsert: false });
         if (uploadError) { uploadErrors.push(`${scan.file.name}: ${uploadError.message}`); continue; }
-        attachmentRows.push({ receipt_id: receipt.id, file_path: filePath, file_name: scan.file.name, mime_type: scan.file.type || "image/jpeg", file_size: scan.file.size, ocr_text: scan.result.rawText, detected_data: scan.result, created_by: userResult.user.id });
+        attachmentRows.push({ receipt_id: receiptId, file_path: filePath, file_name: scan.file.name, mime_type: scan.file.type || "image/jpeg", file_size: scan.file.size, ocr_text: scan.result.rawText, detected_data: scan.result, created_by: userResult.user.id });
       }
       if (attachmentRows.length) await client.from("stock_receipt_attachments").insert(attachmentRows);
-      if (uploadErrors.length) await client.from("stock_receipt_exceptions").insert({ receipt_id: receipt.id, exception_type: "ATTACHMENT_UPLOAD_FAILED", message: `部分 OCR 原图上传失败：${uploadErrors.join("；")}` });
+      if (uploadErrors.length) await client.from("stock_receipt_exceptions").insert({ receipt_id: receiptId, exception_type: "ATTACHMENT_UPLOAD_FAILED", message: `部分 OCR 原图上传失败：${uploadErrors.join("；")}` });
     }
-    router.push(`/warehouse/receipts/${receipt.id}/parse`);
+    router.push(`/warehouse/receipts/${receiptId}/parse`);
   }
 
   return <main className="page">

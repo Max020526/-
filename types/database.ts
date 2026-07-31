@@ -497,6 +497,8 @@ export type Database = {
           customer_id: string | null
           customer_note: string | null
           discount_amount: number
+          expired_at: string | null
+          expires_at: string | null
           fulfillment_type: string
           id: string
           idempotency_key: string
@@ -518,6 +520,8 @@ export type Database = {
           customer_id?: string | null
           customer_note?: string | null
           discount_amount?: number
+          expired_at?: string | null
+          expires_at?: string | null
           fulfillment_type: string
           id?: string
           idempotency_key: string
@@ -539,6 +543,8 @@ export type Database = {
           customer_id?: string | null
           customer_note?: string | null
           discount_amount?: number
+          expired_at?: string | null
+          expires_at?: string | null
           fulfillment_type?: string
           id?: string
           idempotency_key?: string
@@ -1735,9 +1741,17 @@ export type Database = {
         }
         Returns: Json
       }
+      create_stock_receipt: {
+        Args: { p_header: Json; p_items: Json; p_raw_lines: Json }
+        Returns: Json
+      }
       publish_product: { Args: { p_product_id: string }; Returns: Json }
       save_catalog_product: {
         Args: { p_product_id: string | null; p_product: Json; p_variants: Json }
+        Returns: Json
+      }
+      save_received_quantities: {
+        Args: { p_items: Json; p_receipt_id: string }
         Returns: Json
       }
       set_inventory_online_limit: {

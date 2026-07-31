@@ -33,3 +33,11 @@ test("redirects the legacy shop entry to the independent customer website", asyn
   assert.equal(response.status, 307);
   assert.equal(response.headers.get("location"), "https://nexora-studio-shop.xrx020526.chatgpt.site/");
 });
+
+test("adds browser security headers", async () => {
+  const response = await render("/warehouse");
+  assert.match(response.headers.get("content-security-policy") ?? "", /frame-ancestors 'none'/);
+  assert.equal(response.headers.get("x-content-type-options"), "nosniff");
+  assert.equal(response.headers.get("x-frame-options"), "DENY");
+  assert.match(response.headers.get("permissions-policy") ?? "", /camera=\(self\)/);
+});
