@@ -68,7 +68,7 @@ export function OcrScanner({ onApply }: { onApply: (scans: ReceiptOcrScan[]) => 
     let worker: Awaited<ReturnType<typeof import("tesseract.js")["createWorker"]>> | null = null;
     try {
       const { createWorker, PSM } = await import("tesseract.js");
-      worker = await createWorker(["eng", "ita"], 1, { logger: (event) => {
+      worker = await createWorker(["eng", "ita", "chi_sim"], 1, { logger: (event) => {
         if (typeof event.progress === "number") setProgress(Math.round(event.progress * 100));
         if (event.status) setStatus(event.status === "recognizing text" ? "正在识别标签文字…" : "正在准备识别模型…");
       }});
