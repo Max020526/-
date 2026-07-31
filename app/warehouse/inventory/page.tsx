@@ -1,9 +1,5 @@
-"use client";
-import { useCallback, useState } from "react";
-import { Search } from "lucide-react";
-import { PageHead } from "@/components/shared/page-head";
-import { SetupBanner } from "@/components/shared/setup-banner";
-import { EmptyState } from "@/components/shared/empty-state";
-import { useSupabaseQuery } from "@/hooks/use-supabase-query";
-const EMPTY:any[]=[];
-export default function Inventory(){const [term,setTerm]=useState("");const query=useCallback((c:any)=>c.from("inventory").select("id,quantity_on_hand,quantity_reserved,quantity_available,online_quantity_limit,product_variants(sku,barcode,products(style_no,name),colors(name),sizes(name)),warehouses(name)").order("updated_at",{ascending:false}).limit(200),[]);const {data}=useSupabaseQuery<any[]>(query,EMPTY);const rows=data.filter(x=>{const v=x.product_variants;const text=`${v?.sku} ${v?.barcode} ${v?.products?.style_no} ${v?.products?.name}`.toLowerCase();return text.includes(term.toLowerCase())});return <main className="page"><PageHead eyebrow="INVENTORY LOOKUP" title="库存查询" subtitle="按款号、SKU、条形码或商品名称快速查找。"/><SetupBanner/><div className="field" style={{maxWidth:480,marginBottom:16,position:"relative"}}><Search size={16} style={{position:"absolute",left:12,top:12,color:"#89938e"}}/><input style={{paddingLeft:38}} value={term} onChange={e=>setTerm(e.target.value)} placeholder="搜索款号 / SKU / 条形码"/></div><section className="panel">{rows.length?<div className="table-wrap"><table className="data-table"><thead><tr><th>款号</th><th>SKU</th><th>颜色</th><th>尺码</th><th>仓库</th><th>实际</th><th>占用</th><th>可用</th><th>网店上限</th></tr></thead><tbody>{rows.map(x=>{const v=x.product_variants;return <tr key={x.id}><td><strong>{v?.products?.style_no}</strong></td><td>{v?.sku}</td><td>{v?.colors?.name}</td><td>{v?.sizes?.name}</td><td>{x.warehouses?.name}</td><td>{x.quantity_on_hand}</td><td>{x.quantity_reserved}</td><td><strong>{x.quantity_available}</strong></td><td>{x.online_quantity_limit}</td></tr>})}</tbody></table></div>:<EmptyState title="没有库存记录" description="完成第一张入库单后，库存会按 SKU 和仓库显示在这里。"/>}</section></main>}
+import { InventoryCenter } from "@/components/shared/inventory-center";
+
+export default function WarehouseInventoryPage() {
+  return <InventoryCenter mode="warehouse"/>;
+}

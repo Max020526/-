@@ -1714,6 +1714,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      adjust_inventory_stock: {
+        Args: {
+          p_counted_quantity: number
+          p_inventory_id: string
+          p_notes?: string | null
+          p_reason: string
+        }
+        Returns: Json
+      }
       confirm_stock_receipt: { Args: { p_receipt_id: string }; Returns: Json }
       create_online_order: {
         Args: {

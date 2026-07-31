@@ -13,16 +13,23 @@ test("server-renders the NEXORA portal", async () => {
   assert.equal(response.status, 200);
   const html = await response.text();
   assert.match(html, /NEXORA/);
-  assert.match(html, /入库工作台/);
-  assert.match(html, /管理中心/);
-  assert.match(html, /NEXORA 商店/);
+  assert.match(html, /入库端/);
+  assert.match(html, /管理端/);
+  assert.match(html, /顾客网站入口/);
+  assert.match(html, /https:\/\/nexora-studio-shop\.xrx020526\.chatgpt\.site/);
   assert.doesNotMatch(html, /codex-preview|Building your site/);
 });
 
-test("server-renders all three main surfaces", async () => {
-  for (const path of ["/warehouse", "/admin", "/shop"]) {
+test("server-renders the warehouse and management surfaces", async () => {
+  for (const path of ["/warehouse", "/admin"]) {
     const response = await render(path);
     assert.equal(response.status, 200, path);
     assert.match(await response.text(), /NEXORA/, path);
   }
+});
+
+test("redirects the legacy shop entry to the independent customer website", async () => {
+  const response = await render("/shop");
+  assert.equal(response.status, 307);
+  assert.equal(response.headers.get("location"), "https://nexora-studio-shop.xrx020526.chatgpt.site/");
 });

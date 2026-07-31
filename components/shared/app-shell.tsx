@@ -2,18 +2,20 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, Boxes, ChevronRight, ClipboardList, Home, Image, LayoutDashboard, Menu, PackageCheck, PlusCircle, Search, Settings, ShoppingBag, Tags, Truck, Users } from "lucide-react";
+import { BarChart3, Bell, Boxes, ChevronRight, ClipboardList, ExternalLink, Home, LayoutDashboard, Menu, PackageCheck, PlusCircle, ShoppingBag, Truck } from "lucide-react";
 import type { Portal } from "@/lib/constants";
 
 const nav = {
   warehouse: [
-    { section:"仓库作业", links:[{href:"/warehouse",label:"入库首页",icon:Home},{href:"/warehouse/receipts/new",label:"新建入库单",icon:PackageCheck},{href:"/warehouse/receipts",label:"入库记录",icon:ClipboardList},{href:"/warehouse/inventory",label:"库存查询",icon:Search}]},
-    { section:"其他", links:[{href:"/admin",label:"前往管理端",icon:Boxes},{href:"/",label:"切换端口",icon:Menu}]},
+    { section:"入库作业", links:[{href:"/warehouse",label:"入库首页",icon:Home},{href:"/warehouse/receipts/new",label:"新建入库单",icon:PackageCheck},{href:"/warehouse/receipts",label:"入库记录",icon:ClipboardList}]},
+    { section:"库存", links:[{href:"/warehouse/inventory",label:"库存与盘点",icon:Boxes}]},
+    { section:"系统入口", links:[{href:"/admin",label:"前往管理端",icon:BarChart3},{href:"https://nexora-studio-shop.xrx020526.chatgpt.site",label:"打开顾客网站",icon:ExternalLink,external:true},{href:"/",label:"切换端口",icon:Menu}]},
   ],
   admin: [
-    { section:"工作台", links:[{href:"/admin",label:"仪表盘",icon:LayoutDashboard}]},
-    { section:"商品", links:[{href:"/admin/products/new",label:"新建并上架",icon:PlusCircle},{href:"/admin/products/pending",label:"待完善商品",icon:PackageCheck},{href:"/admin/products",label:"全部商品",icon:Boxes},{href:"/admin/categories",label:"商品分类",icon:Tags},{href:"/admin/images",label:"图片管理",icon:Image},{href:"/admin/listings",label:"网店上架",icon:ShoppingBag}]},
-    { section:"业务", links:[{href:"/admin/inventory",label:"库存中心",icon:ClipboardList},{href:"/admin/receipts",label:"入库记录",icon:Truck},{href:"/admin/orders",label:"订单管理",icon:ShoppingBag},{href:"/admin/staff",label:"员工权限",icon:Users},{href:"/admin/settings",label:"系统设置",icon:Settings}]},
+    { section:"经营管理", links:[{href:"/admin",label:"数据仪表盘",icon:LayoutDashboard},{href:"/admin/orders",label:"订单管理",icon:ShoppingBag}]},
+    { section:"商品管理", links:[{href:"/admin/products/new",label:"新建并上架",icon:PlusCircle},{href:"/admin/products/pending",label:"待完善商品",icon:PackageCheck},{href:"/admin/products",label:"全部商品",icon:Boxes}]},
+    { section:"库存管理", links:[{href:"/admin/inventory",label:"库存控制中心",icon:ClipboardList},{href:"/warehouse/receipts",label:"查看入库记录",icon:Truck}]},
+    { section:"系统入口", links:[{href:"/warehouse",label:"前往入库端",icon:PackageCheck},{href:"https://nexora-studio-shop.xrx020526.chatgpt.site",label:"打开顾客网站",icon:ExternalLink,external:true},{href:"/",label:"切换端口",icon:Menu}]},
   ],
 };
 
@@ -24,7 +26,7 @@ export function AppShell({ portal, title, children }: { portal:Portal; title:str
   return <div className="app-shell">
     <aside className="sidebar">
       <Link href="/" className="sidebar-brand"><span className="brand-mark">N</span><div><b>NEXORA</b><small>{portal === "warehouse" ? "WAREHOUSE" : "OPERATIONS"}</small></div></Link>
-      <nav>{nav[portal].map(group => <div key={group.section}><div className="nav-section">{group.section}</div>{group.links.map(({href,label,icon:Icon}) => <Link key={href} href={href} className={`nav-link ${active(pathname,href)?"active":""}`}><Icon size={17}/><span>{label}</span></Link>)}</div>)}</nav>
+      <nav>{nav[portal].map(group => <div key={group.section}><div className="nav-section">{group.section}</div>{group.links.map(({href,label,icon:Icon,external}) => external ? <a key={href} href={href} target="_blank" rel="noreferrer" className="nav-link"><Icon size={17}/><span>{label}</span></a> : <Link key={href} href={href} className={`nav-link ${active(pathname,href)?"active":""}`}><Icon size={17}/><span>{label}</span></Link>)}</div>)}</nav>
       <div className="sidebar-foot"><div className="user-mini"><div className="avatar">NX</div><div><b>NEXORA 员工</b><span>未登录</span></div></div></div>
     </aside>
     <div className="app-main">
