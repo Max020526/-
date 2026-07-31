@@ -1,6 +1,7 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/types/database";
 
-let instance: SupabaseClient | null = null;
+let instance: SupabaseClient<Database> | null = null;
 
 export function isSupabaseConfigured() {
   return Boolean(
@@ -9,7 +10,7 @@ export function isSupabaseConfigured() {
   );
 }
 
-export function getSupabase(): SupabaseClient | null {
+export function getSupabase(): SupabaseClient<Database> | null {
   if (!isSupabaseConfigured()) return null;
   if (!instance) {
     instance = createClient(

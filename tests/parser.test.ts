@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { mergeDuplicateItems, normalizeStyleNo, parseReceiptText } from "../lib/parser/receipt-parser.ts";
+import { parseCsv, spreadsheetRowsToReceiptItems } from "../lib/parser/spreadsheet-parser.ts";
 
 test("normalizes style numbers without deleting brand prefixes", () => {
   assert.equal(normalizeStyleNo("  lissimo   y5127 "), "LISSIMO Y5127");
@@ -26,4 +27,19 @@ test("flags missing quantities and requires explicit duplicate merge", () => {
   const merged = mergeDuplicateItems(rows);
   assert.equal(merged.length, 1);
   assert.equal(merged[0].quantity, 18);
+});
+
+test("parses quoted CSV cells and maps standard spreadsheet columns", () => {
+  const rows = parseCsv('款号,颜色,尺码,数量,备注\r\n"NX,101",黑色,M,12,"首批,加急"');
+  const items = spreadsheetRowsToReceiptItems(rows);
+  assert.equal(items.length, 1);
+  assert.equal(items[0].normalizedStyleNo, "NX,101");
+  assert.equal(items[0].normalizedColor, "黑色");
+  assert.equal(items[0].normalizedSize, "M");
+  assert.equal(items[0].quantity, 12);
+  assert.equal(items[0].status, "VALID");
+});
+
+test("rejects spreadsheets without required columns", () => {
+  assert.throws(() => spreadsheetRowsToReceiptItems([["款号", "颜色"], ["NX1", "黑色"]]), /数量/);
 });

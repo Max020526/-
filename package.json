@@ -14,13 +14,14 @@
     "db:generate": "drizzle-kit generate"
   },
   "dependencies": {
-    "@supabase/supabase-js": "2.55.0",
+    "@supabase/supabase-js": "2.111.0",
     "cross-env": "7.0.3",
     "drizzle-orm": "0.45.2",
     "lucide-react": "0.468.0",
     "next": "16.2.6",
     "react": "19.2.6",
     "react-dom": "19.2.6",
+    "read-excel-file": "9.3.5",
     "zod": "3.24.1"
   },
   "devDependencies": {
