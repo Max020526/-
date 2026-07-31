@@ -1273,6 +1273,60 @@ export type Database = {
           },
         ]
       }
+      stock_receipt_attachments: {
+        Row: {
+          created_at: string
+          created_by: string
+          detected_data: Json
+          file_name: string
+          file_path: string
+          file_size: number
+          id: string
+          mime_type: string
+          ocr_text: string | null
+          receipt_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          detected_data?: Json
+          file_name: string
+          file_path: string
+          file_size: number
+          id?: string
+          mime_type: string
+          ocr_text?: string | null
+          receipt_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          detected_data?: Json
+          file_name?: string
+          file_path?: string
+          file_size?: number
+          id?: string
+          mime_type?: string
+          ocr_text?: string | null
+          receipt_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_receipt_attachments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_receipt_attachments_receipt_id_fkey"
+            columns: ["receipt_id"]
+            isOneToOne: false
+            referencedRelation: "stock_receipts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stock_receipt_exceptions: {
         Row: {
           created_at: string
@@ -1346,6 +1400,7 @@ export type Database = {
           raw_style_no: string
           receipt_id: string
           received_quantity: number | null
+          source_metadata: Json
           status: string
           variant_id: string | null
         }
@@ -1366,6 +1421,7 @@ export type Database = {
           raw_style_no: string
           receipt_id: string
           received_quantity?: number | null
+          source_metadata?: Json
           status?: string
           variant_id?: string | null
         }
@@ -1386,6 +1442,7 @@ export type Database = {
           raw_style_no?: string
           receipt_id?: string
           received_quantity?: number | null
+          source_metadata?: Json
           status?: string
           variant_id?: string | null
         }

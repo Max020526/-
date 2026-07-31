@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { mergeDuplicateItems, normalizeStyleNo, parseReceiptText } from "../lib/parser/receipt-parser.ts";
 import { parseCsv, spreadsheetRowsToReceiptItems } from "../lib/parser/spreadsheet-parser.ts";
+import { labelResultToReceiptItem, parseLabelOcr } from "../lib/ocr/label-parser.ts";
 
 test("normalizes style numbers without deleting brand prefixes", () => {
   assert.equal(normalizeStyleNo("  lissimo   y5127 "), "LISSIMO Y5127");
@@ -42,4 +43,21 @@ test("parses quoted CSV cells and maps standard spreadsheet columns", () => {
 
 test("rejects spreadsheets without required columns", () => {
   assert.throws(() => spreadsheetRowsToReceiptItems([["款号", "颜色"], ["NX1", "黑色"]]), /数量/);
+});
+
+test("extracts clothing label fields from multilingual OCR text", () => {
+  const result = parseLabelOcr("NEXORA\nARTICOLO: NX-30283\nCOLORE: NERO\nTAGLIA: XL\nQTY: 12\n80% COTTON 20% POLYESTER", "8051234567890", 88);
+  assert.equal(result.styleNo, "NX-30283");
+  assert.equal(result.color, "NERO");
+  assert.equal(result.size, "XL");
+  assert.equal(result.quantity, 12);
+  assert.equal(result.barcode, "8051234567890");
+  assert.equal(result.material, "80% COTTON / 20% POLYESTER");
+  assert.equal(labelResultToReceiptItem(result, 1).status, "VALID");
+});
+
+test("uses a detected barcode as a safe style fallback and requires color review", () => {
+  const result = parseLabelOcr("SIZE M\nMADE IN ITALY", "8051234567890", 72);
+  assert.equal(result.styleNo, "8051234567890");
+  assert.equal(labelResultToReceiptItem(result, 1).status, "ERROR");
 });

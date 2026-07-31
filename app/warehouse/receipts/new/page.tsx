@@ -10,6 +10,8 @@ import { StatusBadge } from "@/components/shared/status-badge";
 import { getSupabase } from "@/lib/supabase/client";
 import { mergeDuplicateItems, parseReceiptText, type ParsedReceiptItem } from "@/lib/parser/receipt-parser";
 import { parseSpreadsheetFile } from "@/lib/parser/spreadsheet-parser";
+import { OcrScanner, type ReceiptOcrScan } from "@/components/warehouse/ocr-scanner";
+import { labelResultToReceiptItem } from "@/lib/ocr/label-parser";
 
 const EXAMPLE = "1.DL30283 18棕 18黑\n2.BL30385 100黑 41棕 51红 29绿\n3.Z2690 浅牛12S9M5L 深牛12S13M6L";
 type Option = { id: string; name: string };
@@ -19,6 +21,7 @@ export default function NewReceipt() {
   const [tab, setTab] = useState("text");
   const [source, setSource] = useState("");
   const [sourceFileName, setSourceFileName] = useState("");
+  const [ocrScans, setOcrScans] = useState<ReceiptOcrScan[]>([]);
   const [items, setItems] = useState<ParsedReceiptItem[]>([]);
   const [suppliers, setSuppliers] = useState<Option[]>([]);
   const [warehouses, setWarehouses] = useState<Option[]>([]);
@@ -54,6 +57,7 @@ export default function NewReceipt() {
   function parseText() {
     setMessage(null);
     setSourceFileName("");
+    setOcrScans([]);
     if (!source.trim()) { setMessage("请先粘贴供应商货单文字。"); return; }
     setItems(parseReceiptText(source));
   }
@@ -65,6 +69,7 @@ export default function NewReceipt() {
     try {
       const parsed = await parseSpreadsheetFile(file);
       setItems(parsed);
+      setOcrScans([]);
       setSourceFileName(file.name);
       setSource(parsed.map((item) => item.rawText).join("\n"));
       setMessage(`已读取 ${parsed.length} 条商品明细，请检查后保存。`);
@@ -77,11 +82,21 @@ export default function NewReceipt() {
 
   function addManual() {
     setSourceFileName("");
+    setOcrScans([]);
     setItems((current) => [...current, {
       lineNumber: current.length + 1, rawText: "手动添加", rawStyleNo: "", normalizedStyleNo: "",
       rawColor: "", normalizedColor: "", rawSize: "UNI", normalizedSize: "UNI", quantity: 1,
       status: "ERROR", error: "请填写款号和颜色", duplicateKey: null,
     }]);
+  }
+
+  function applyOcr(scans: ReceiptOcrScan[]) {
+    const nextItems = scans.map((scan, index) => labelResultToReceiptItem(scan.result, index + 1));
+    const counts = new Map<string, number>();
+    for (const item of nextItems) { const key = `${item.normalizedStyleNo}|${item.normalizedColor}|${item.normalizedSize}`; counts.set(key, (counts.get(key) ?? 0) + 1); }
+    const marked = nextItems.map((item) => { const key = `${item.normalizedStyleNo}|${item.normalizedColor}|${item.normalizedSize}`; return (counts.get(key) ?? 0) > 1 ? { ...item, duplicateKey: key, status: item.status === "ERROR" ? "ERROR" as const : "WARNING" as const, error: item.error ?? "多张照片识别出相同 SKU，请确认是否合并" } : item; });
+    setOcrScans(scans); setItems(marked); setSourceFileName(""); setSource(scans.map((scan) => scan.result.rawText).join("\n---\n"));
+    setMessage(`已将 ${scans.length} 条照片识别结果加入明细，请人工确认后保存。`);
   }
 
   function update(index: number, key: keyof ParsedReceiptItem, value: string | number) {
@@ -104,7 +119,7 @@ export default function NewReceipt() {
     setSaving(true); setMessage(null);
     const { data: userResult } = await client.auth.getUser();
     if (!userResult.user) { setMessage("请先登录员工账号。"); setSaving(false); return; }
-    const sourceType = sourceFileName ? "SPREADSHEET" : tab === "manual" ? "MANUAL" : "PASTED_TEXT";
+    const sourceType = ocrScans.length ? "OCR_PHOTO" : sourceFileName ? "SPREADSHEET" : tab === "manual" ? "MANUAL" : "PASTED_TEXT";
     const receiptNotes = [sourceFileName && `导入文件：${sourceFileName}`, notes].filter(Boolean).join("；") || null;
     const { data: receipt, error } = await client.from("stock_receipts").insert({
       receipt_date: date, supplier_id: supplierId || null, warehouse_id: warehouseId, source_type: sourceType,
@@ -120,19 +135,33 @@ export default function NewReceipt() {
       raw_text: item.rawText || `${item.normalizedStyleNo} ${item.normalizedColor} ${item.normalizedSize} ${item.quantity}`,
       parse_status: "PARSED",
     }));
-    const dbItems = items.map((item) => ({
+    const dbItems = items.map((item, itemIndex) => ({
       receipt_id: receipt.id, raw_line_number: item.lineNumber,
       raw_style_no: item.rawStyleNo || item.normalizedStyleNo, normalized_style_no: item.normalizedStyleNo,
       raw_color: item.rawColor || item.normalizedColor, normalized_color: item.normalizedColor,
       raw_size: item.rawSize || item.normalizedSize, normalized_size: item.normalizedSize,
       expected_quantity: item.quantity, received_quantity: null, difference_quantity: null,
       status: item.status === "ERROR" ? "ERROR" : "PENDING", notes: item.error,
+      source_metadata: ocrScans[itemIndex]?.result ?? {},
     }));
     const [{ error: rawError }, { error: itemError }] = await Promise.all([
       client.from("stock_receipt_raw_lines").insert(rawLines),
       client.from("stock_receipt_items").insert(dbItems),
     ]);
     if (rawError || itemError) { setMessage(rawError?.message ?? itemError?.message ?? "保存解析结果失败"); setSaving(false); return; }
+    if (ocrScans.length) {
+      const attachmentRows = [];
+      const uploadErrors: string[] = [];
+      for (const scan of ocrScans) {
+        const extension = (scan.file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "") || "jpg";
+        const filePath = `${receipt.id}/${crypto.randomUUID()}.${extension}`;
+        const { error: uploadError } = await client.storage.from("receipt-scans").upload(filePath, scan.file, { contentType: scan.file.type, upsert: false });
+        if (uploadError) { uploadErrors.push(`${scan.file.name}: ${uploadError.message}`); continue; }
+        attachmentRows.push({ receipt_id: receipt.id, file_path: filePath, file_name: scan.file.name, mime_type: scan.file.type || "image/jpeg", file_size: scan.file.size, ocr_text: scan.result.rawText, detected_data: scan.result, created_by: userResult.user.id });
+      }
+      if (attachmentRows.length) await client.from("stock_receipt_attachments").insert(attachmentRows);
+      if (uploadErrors.length) await client.from("stock_receipt_exceptions").insert({ receipt_id: receipt.id, exception_type: "ATTACHMENT_UPLOAD_FAILED", message: `部分 OCR 原图上传失败：${uploadErrors.join("；")}` });
+    }
     router.push(`/warehouse/receipts/${receipt.id}/parse`);
   }
 
@@ -156,7 +185,7 @@ export default function NewReceipt() {
       {tab === "text" && <><div className="field full"><label>供应商货单文字</label><textarea value={source} onChange={(event) => setSource(event.target.value)} placeholder={EXAMPLE}/><div className="field-help">支持“18棕”“浅牛12S9M5L”等紧凑格式；系统保留每一行原文便于追溯。</div></div><div className="form-actions"><button className="button" onClick={() => setSource(EXAMPLE)}>填入格式示例</button><button className="button primary" onClick={parseText}><WandSparkles size={16}/>开始解析</button></div></>}
       {tab === "excel" && <div className="empty"><div><div className="empty-icon"><FileSpreadsheet/></div><b>{importing ? "正在读取文件…" : sourceFileName || "选择 Excel / CSV 货单"}</b><span>必填列：款号、颜色、数量；可选列：尺码、供应商、成本价、备注。支持 .xlsx 与 .csv。</span><label className="button primary" style={{ marginTop: 14, cursor: "pointer" }}>{importing ? <LoaderCircle className="animate-spin" size={16}/> : <FileSpreadsheet size={16}/>}选择文件<input hidden type="file" accept=".xlsx,.csv,.xls" disabled={importing} onChange={(event) => void importSpreadsheet(event.target.files?.[0])}/></label></div></div>}
       {tab === "manual" && <div className="empty"><div><b>手动录入商品明细</b><span>点击添加后，在下方逐行填写款号、颜色、尺码与数量。</span><button className="button primary" style={{ marginTop: 14 }} onClick={addManual}><Plus size={15}/>添加一行</button></div></div>}
-      {tab === "ocr" && <div className="empty"><div><div className="empty-icon"><ImagePlus/></div><b>拍照识别将在后续版本开放</b><span>V1.0 先保障文字和结构化导入的库存准确性。</span></div></div>}
+      {tab === "ocr" && <OcrScanner onApply={applyOcr}/>}
     </section>
     {items.length > 0 && <section className="panel" style={{ marginTop: 16 }}>
       <div className="panel-head"><div><h2>解析预览</h2><p>保存前请确认颜色、尺码与数量</p></div>{summary.duplicates > 0 && <button className="button small panel-action" onClick={() => setItems(mergeDuplicateItems(items))}>合并重复项</button>}</div>
