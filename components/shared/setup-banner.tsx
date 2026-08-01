@@ -3,5 +3,5 @@ import { isSupabaseConfigured } from "@/lib/supabase/client";
 
 export function SetupBanner() {
   if (isSupabaseConfigured()) return null;
-  return <div className="setup-banner"><DatabaseZap size={20} /><div><b>等待连接业务数据库</b><span>界面与业务逻辑已就绪。请在环境变量中配置 <code>NEXT_PUBLIC_SUPABASE_URL</code> 和 <code>NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY</code>，随后执行项目迁移。系统不会使用模拟业务数据。</span></div></div>;
+  return <div className="setup-banner"><DatabaseZap size={20} /><div><b>业务数据库暂未连接</b><span>请先刷新页面；如果仍然看到此提示，请联系系统管理员。为保护库存准确，数据库恢复前系统不会保存任何入库操作。</span></div></div>;
 }

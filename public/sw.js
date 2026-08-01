@@ -1,6 +1,6 @@
-const VERSION = "nexora-pwa-v2";
+const VERSION = "nexora-pwa-v3";
 const STATIC_CACHE = `${VERSION}-static`;
-const CORE_ASSETS = ["/", "/offline", "/favicon.svg", "/app-icon-192.png", "/app-icon-512.png", "/manifest.webmanifest"];
+const CORE_ASSETS = ["/offline", "/favicon.svg", "/app-icon-192.png", "/app-icon-512.png", "/manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(STATIC_CACHE).then((cache) => cache.addAll(CORE_ASSETS)));

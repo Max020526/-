@@ -7,6 +7,10 @@ const migrationPath = new URL(
   import.meta.url,
 );
 const seedPath = new URL("../supabase/seed.sql", import.meta.url);
+const customColorMigrationPath = new URL(
+  "../supabase/migrations/20260801110403_add_inbound_custom_colors.sql",
+  import.meta.url,
+);
 
 test("fast inbound migration keeps inventory writes behind controlled functions", async () => {
   const migration = await readFile(migrationPath, "utf8");
@@ -60,4 +64,17 @@ test("reference data includes all required SKU color codes and ONE_SIZE", async 
     assert.match(seed, new RegExp(`'${code}'`));
   }
   assert.match(seed, /'ONE_SIZE'/);
+  assert.match(seed, /'牛油果绿'/);
+  assert.match(seed, /'牛仔蓝'/);
+  assert.match(seed, /'摩卡色'/);
+});
+
+test("warehouse custom colors are created only through a controlled RPC", async () => {
+  const migration = await readFile(customColorMigrationPath, "utf8");
+  assert.match(migration, /create or replace function private\.create_inbound_color/i);
+  assert.match(migration, /private\.has_app_role\(array\['employee', 'admin'\]\)/i);
+  assert.match(migration, /CREATE_INBOUND_COLOR/);
+  assert.match(migration, /revoke all on function public\.create_inbound_color\(text,text,text\) from public, anon/i);
+  assert.match(migration, /grant execute on function public\.create_inbound_color\(text,text,text\) to authenticated/i);
+  assert.doesNotMatch(migration, /grant insert[^;]*public\.colors[^;]*authenticated/i);
 });

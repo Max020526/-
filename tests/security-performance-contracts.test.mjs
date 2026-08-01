@@ -39,3 +39,18 @@ test("both deployment targets define baseline browser security headers", async (
     assert.match(contents, /X-Content-Type-Options/);
   }
 });
+
+test("quick inbound uses one model number with multiple color rows and custom colors", async () => {
+  const page = await source("app/inbound/new/page.tsx");
+  assert.match(page, /一个款号可一次录入多种颜色/);
+  assert.match(page, /添加另一种颜色/);
+  assert.match(page, /create_inbound_color/);
+  assert.match(page, /没有这个颜色？新增/);
+});
+
+test("warehouse and admin mobile navigation remain separate and can switch portals", async () => {
+  const shell = await source("components/shared/app-shell.tsx");
+  assert.match(shell, /返回主页 · 切换端口/);
+  assert.match(shell, /href: "\/inbound\/batch", label: "批量入库"/);
+  assert.match(shell, /href: "\/admin\/orders", label: "订单"/);
+});

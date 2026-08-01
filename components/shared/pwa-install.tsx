@@ -20,7 +20,9 @@ export function PwaInstall() {
 
   useEffect(() => {
     if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch(() => undefined);
+      navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" })
+        .then((registration) => registration.update())
+        .catch(() => undefined);
     }
 
     if (isStandalone() || window.localStorage.getItem("nexora-install-dismissed") === "1") {

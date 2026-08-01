@@ -2019,6 +2019,10 @@ export type Database = {
         Returns: Json
       }
       confirm_stock_receipt: { Args: { p_receipt_id: string }; Returns: Json }
+      create_inbound_color: {
+        Args: { p_code?: string; p_hex_value?: string; p_name_zh: string }
+        Returns: Json
+      }
       create_online_order: {
         Args: {
           p_customer_note: string
