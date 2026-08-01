@@ -1,8 +1,19 @@
 # NEXORA Fashion Commerce Platform V1.0
 
-NEXORA 是一个统一数据库、多个职责工作区的服装商业管理平台。本仓库当前交付的是 V1.0 第一阶段：项目基础、Supabase 数据基础、正式 RBAC、入库端 MVP，以及商品、SKU、库存和媒体的基础结构。
+NEXORA 是一个统一数据库、多个职责工作区的服装商业管理平台。本仓库当前已交付 V1.0 第一阶段和第二阶段：项目基础、正式 RBAC、入库端 MVP、库存事实模型，以及完整的商品运营、渠道价格和发布边界。
 
-正式开发基线是 `NEXORA_Fashion_Commerce_Platform_System_Specification_V1.0`、核心 ER 图和三条业务流程图。当前阶段不交付完整商城、完整订单履约、完整财务中心或高级分析；现有相关路由只保留明确边界，不能当作本阶段验收完成项。
+正式开发基线是 `NEXORA_Fashion_Commerce_Platform_System_Specification_V1.0`、核心 ER 图、三条业务流程图和 Phase 2–6 开发提示词。当前阶段不交付完整商城、完整订单履约、完整财务中心或高级分析；现有相关路由只保留明确边界，不能当作本阶段验收完成项。
+
+## 第二阶段已完成
+
+- 商品运营队列：草稿、完善中、待发布、发布受阻、已发布、已归档。
+- SPU 多语言资料与颜色/尺码 SKU 管理，商品编辑器不再直接改库存。
+- `channels`、`price_books`、`price_book_items`、`product_publications` 正式渠道发布模型。
+- 逐字段发布检查、渠道级发布/下架、批量分类/推荐/归档和全链路审计。
+- 私有商品媒体登记、排序、主图、软删除和安全签名媒体出口。
+- 匿名商城只读投影，不公开成本、供应商、审计、私有路径或未发布商品。
+
+第二阶段详细说明见 [第二阶段交付报告](docs/PHASE_2.md)。
 
 ## 第一阶段已完成
 
@@ -71,11 +82,18 @@ npx supabase db push
 npx supabase db seed
 ```
 
-迁移按文件名顺序执行。最后三份第一阶段正式对齐迁移是：
+迁移按文件名顺序执行。第一阶段正式对齐迁移是：
 
 - `20260801160000_v1_phase1_baseline_alignment.sql`
 - `20260801161000_post_size_aware_inbound_receipt.sql`
 - `20260801162000_harden_inbound_cancellation.sql`
+
+第二阶段商品运营迁移是：
+
+- `20260801170000_phase2_product_operations.sql`
+- `20260801171000_phase2_product_operations_rpc.sql`
+- `20260801172000_phase2_media_public_boundary.sql`
+- `20260801173000_phase2_advisor_hardening.sql`
 
 迁移显式配置 Data API `GRANT` 与 RLS。Supabase 2026 年的新默认设置不再自动暴露新表，因此不要省略 GRANT。
 
@@ -138,7 +156,7 @@ npm run build:netlify
 
 仓库已提供 `netlify.toml`，构建命令为 `npm run build:netlify`。在 Netlify 环境变量中配置上述变量，并将 `NEXT_PUBLIC_SITE_URL` 设置为最终 HTTPS 域名。
 
-本次交付没有执行生产部署、没有创建收费资源，也没有把本地迁移写入生产数据库。上线前必须：
+本次在用户授权后已将第一阶段正式对齐迁移和第二阶段迁移写入现有 `NEXORA_WHOLESALE` Supabase Cloud 项目；执行时商品、SKU、库存和到货业务表均为空。没有创建收费资源，也没有执行 Netlify 生产部署。正式开放给员工前必须：
 
 1. 在开发 Supabase 项目完整执行迁移和 Seed。
 2. 执行 A01–A16 第一阶段适用项。

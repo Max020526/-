@@ -9,7 +9,7 @@ import { friendlyError } from "@/lib/errors/friendly-error";
 import { compressProductImage } from "@/lib/images/compress";
 import { getSupabase } from "@/lib/supabase/client";
 
-type Image = { id: string; file_path: string; public_url: string; is_primary: boolean; sort_order: number };
+type Image = { id: string; file_path: string; public_url?: string; is_primary: boolean; sort_order: number; image_type?: string; deleted_at?: string | null };
 
 export function ProductImageManager({ productId, productName, images, onChanged, onMessage }: { productId: string; productName: string; images: Image[]; onChanged: () => void; onMessage: (message: string) => void }) {
   const [working, setWorking] = useState(false);
@@ -42,7 +42,16 @@ export function ProductImageManager({ productId, productName, images, onChanged,
         const { error } = await client.storage.from("product-images").upload(path, file, { contentType: file.type });
         if (error) throw error;
         const first = images.length === 0 && index === 0;
-        const { error: dbError } = await client.from("product_images").insert({ product_id: productId, file_path: path, public_url: "", image_type: first ? "MAIN" : "DETAIL", sort_order: images.length + index, is_primary: first });
+        const { error: dbError } = await client.rpc("rpc_register_product_media", {
+          p_product_id: productId,
+          p_variant_id: null,
+          p_storage_path: path,
+          p_mime_type: file.type,
+          p_file_size: file.size,
+          p_media_type: first ? "MAIN" : "DETAIL",
+          p_alt_text_zh: productName,
+          p_is_primary: first,
+        });
         if (dbError) { await client.storage.from("product-images").remove([path]); throw dbError; }
       }
       onMessage(`${files.length} 张图片上传成功`); onChanged();
@@ -57,16 +66,19 @@ export function ProductImageManager({ productId, productName, images, onChanged,
   }
 
   async function remove(image: Image) {
-    if (!confirm("确认删除这张商品图片？删除后无法恢复。")) return;
+    if (!confirm("确认移除这张商品图片？系统会保留审计记录。")) return;
     const client = getSupabase(); if (!client) return; setWorking(true);
-    const { error: databaseError } = await client.from("product_images").delete().eq("id", image.id);
+    const { data: storedPath, error: databaseError } = await client.rpc("rpc_soft_delete_product_media", {
+      p_product_id: productId,
+      p_media_id: image.id,
+    });
     if (databaseError) {
       onMessage(friendlyError(databaseError, "图片删除失败，请重试。"));
       setWorking(false);
       return;
     }
-    const { error: storageError } = await client.storage.from("product-images").remove([image.file_path]);
-    onMessage(storageError ? "图片记录已删除，存储文件将在后续清理。" : "图片已删除");
+    const { error: storageError } = await client.storage.from("product-images").remove([storedPath || image.file_path]);
+    onMessage(storageError ? "图片已从商品中移除，存储文件将进入清理队列。" : "图片已安全移除");
     setWorking(false);
     onChanged();
   }

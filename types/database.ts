@@ -1997,6 +1997,30 @@ export type Database = {
         }
         Relationships: []
       }
+      channels: {
+        Row: { id: string; organization_id: string; code: string; name: string; channel_type: string; currency: string; is_active: boolean; settings: Json; created_by: string | null; updated_by: string | null; created_at: string; updated_at: string }
+        Insert: { id?: string; organization_id: string; code: string; name: string; channel_type: string; currency?: string; is_active?: boolean; settings?: Json; created_by?: string | null; updated_by?: string | null; created_at?: string; updated_at?: string }
+        Update: { id?: string; organization_id?: string; code?: string; name?: string; channel_type?: string; currency?: string; is_active?: boolean; settings?: Json; created_by?: string | null; updated_by?: string | null; created_at?: string; updated_at?: string }
+        Relationships: []
+      }
+      price_books: {
+        Row: { id: string; organization_id: string; channel_id: string; code: string; name: string; currency: string; is_default: boolean; is_active: boolean; created_by: string | null; updated_by: string | null; created_at: string; updated_at: string }
+        Insert: { id?: string; organization_id: string; channel_id: string; code: string; name: string; currency?: string; is_default?: boolean; is_active?: boolean; created_by?: string | null; updated_by?: string | null; created_at?: string; updated_at?: string }
+        Update: { id?: string; organization_id?: string; channel_id?: string; code?: string; name?: string; currency?: string; is_default?: boolean; is_active?: boolean; created_by?: string | null; updated_by?: string | null; created_at?: string; updated_at?: string }
+        Relationships: []
+      }
+      price_book_items: {
+        Row: { id: string; organization_id: string; price_book_id: string; product_id: string; variant_id: string | null; unit_price: number; compare_at_price: number | null; cost_reference: number | null; valid_from: string | null; valid_until: string | null; is_active: boolean; created_by: string | null; updated_by: string | null; created_at: string; updated_at: string }
+        Insert: { id?: string; organization_id: string; price_book_id: string; product_id: string; variant_id?: string | null; unit_price: number; compare_at_price?: number | null; cost_reference?: number | null; valid_from?: string | null; valid_until?: string | null; is_active?: boolean; created_by?: string | null; updated_by?: string | null; created_at?: string; updated_at?: string }
+        Update: { id?: string; organization_id?: string; price_book_id?: string; product_id?: string; variant_id?: string | null; unit_price?: number; compare_at_price?: number | null; cost_reference?: number | null; valid_from?: string | null; valid_until?: string | null; is_active?: boolean; created_by?: string | null; updated_by?: string | null; created_at?: string; updated_at?: string }
+        Relationships: []
+      }
+      product_publications: {
+        Row: { id: string; organization_id: string; product_id: string; channel_id: string; status: string; slug: string; scheduled_at: string | null; published_at: string | null; unpublished_at: string | null; last_validated_at: string | null; validation_errors: Json; external_reference: string | null; created_by: string | null; updated_by: string | null; created_at: string; updated_at: string }
+        Insert: { id?: string; organization_id: string; product_id: string; channel_id: string; status?: string; slug: string; scheduled_at?: string | null; published_at?: string | null; unpublished_at?: string | null; last_validated_at?: string | null; validation_errors?: Json; external_reference?: string | null; created_by?: string | null; updated_by?: string | null; created_at?: string; updated_at?: string }
+        Update: { id?: string; organization_id?: string; product_id?: string; channel_id?: string; status?: string; slug?: string; scheduled_at?: string | null; published_at?: string | null; unpublished_at?: string | null; last_validated_at?: string | null; validation_errors?: Json; external_reference?: string | null; created_by?: string | null; updated_by?: string | null; created_at?: string; updated_at?: string }
+        Relationships: []
+      }
     }
     Views: {
       inbound_receipts: {
@@ -2028,6 +2052,16 @@ export type Database = {
       }
     }
     Functions: {
+      rpc_create_product_draft: { Args: { p_payload: Json }; Returns: Json }
+      rpc_save_product_operations: { Args: { p_product_id: string; p_payload: Json }; Returns: Json }
+      rpc_upsert_product_variant: { Args: { p_product_id: string; p_variant_id?: string | null; p_color_id?: string | null; p_size_id?: string | null; p_sku?: string | null; p_barcode?: string | null; p_is_active?: boolean; p_is_visible_online?: boolean; p_sort_order?: number }; Returns: Json }
+      rpc_set_product_channel_price: { Args: { p_product_id: string; p_channel_id: string; p_variant_id?: string | null; p_unit_price: number; p_compare_at_price?: number | null; p_valid_from?: string | null; p_valid_until?: string | null }; Returns: Json }
+      rpc_validate_product_publication: { Args: { p_product_id: string; p_channel_id: string }; Returns: Json }
+      rpc_publish_product_channel: { Args: { p_product_id: string; p_channel_id: string; p_scheduled_at?: string | null }; Returns: Json }
+      rpc_unpublish_product_channel: { Args: { p_product_id: string; p_channel_id: string }; Returns: Json }
+      rpc_bulk_update_products: { Args: { p_product_ids: string[]; p_action: string; p_value?: string | null }; Returns: Json }
+      rpc_register_product_media: { Args: { p_product_id: string; p_variant_id?: string | null; p_storage_path: string; p_mime_type: string; p_file_size: number; p_width?: number | null; p_height?: number | null; p_media_type?: string; p_alt_text_zh?: string | null; p_alt_text_it?: string | null; p_alt_text_en?: string | null; p_is_primary?: boolean }; Returns: string }
+      rpc_soft_delete_product_media: { Args: { p_product_id: string; p_media_id: string }; Returns: string }
       get_my_authorization: { Args: Record<PropertyKey, never>; Returns: Json }
       adjust_inventory_stock: {
         Args: {

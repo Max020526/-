@@ -18,6 +18,7 @@ import {
   Settings,
   ShieldCheck,
   ShoppingBag,
+  Send,
   Store,
   Tags,
   Truck,
@@ -53,8 +54,9 @@ const nav = {
     ] },
     { section: "商品与库存", links: [
       { href: "/admin/products", label: "P02 · 商品运营", icon: Boxes },
-      { href: "/admin/products/new", label: "新建并上架", icon: PlusCircle },
-      { href: "/admin/products/pending", label: "待完善商品", icon: PackageCheck },
+      { href: "/admin/products/new", label: "创建商品草稿", icon: PlusCircle },
+      { href: "/admin/products?queue=enriching", label: "资料完善队列", icon: PackageCheck },
+      { href: "/admin/products?queue=ready", label: "待发布队列", icon: Send },
       { href: "/admin/inventory", label: "库存监管", icon: ClipboardList },
     ] },
     { section: "采购与财务", links: [
