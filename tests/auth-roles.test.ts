@@ -13,6 +13,10 @@ test("maps internal routes to the minimum required role", () => {
 test("chooses a safe landing page for each internal role", () => {
   assert.equal(defaultInternalRoute("system_admin"), "/admin");
   assert.equal(defaultInternalRoute("warehouse_staff"), "/warehouse");
+  assert.equal(defaultInternalRoute("buyer"), "/admin/purchasing");
+  assert.equal(defaultInternalRoute("finance"), "/admin/business");
+  assert.equal(defaultInternalRoute("auditor"), "/admin/business");
+  assert.equal(defaultInternalRoute("cashier"), "/warehouse/pos");
   assert.equal(normalizeInternalRole("admin"), "system_admin");
   assert.equal(normalizeInternalRole("employee"), "warehouse_staff");
   assert.equal(isInternalRole("customer"), false);

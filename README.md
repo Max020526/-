@@ -1,6 +1,6 @@
 # NEXORA Fashion Commerce Platform V1.0
 
-NEXORA 是一个统一数据库、多职责工作区的服装零售商业平台。当前已完成入库、商品运营、安全零售商城，以及订单、仓库履约、退货与退款内部流程。
+NEXORA 是一个统一数据库、多职责工作区的服装零售商业平台。当前已完成入库、商品运营、安全零售商城、订单履约、退货退款、采购、经营财务、老板看板和基础 POS。
 
 ## 技术栈
 
@@ -18,6 +18,10 @@ NEXORA 是一个统一数据库、多职责工作区的服装零售商业平台�
 - `/admin/products`：商品资料、图片、价格与渠道发布
 - `/admin/orders`：订单运营、付款核验、取消和时间线
 - `/admin/returns`：退货审核、收货、质检处置和内部退款记录
+- `/admin/purchasing`：采购审批、下达、部分收货和采购差异
+- `/admin/finance`：经营收支、费用、采购付款、毛利和 CSV
+- `/admin/business`：老板统一经营指标与下钻入口
+- `/warehouse/pos`：开班、扫码销售、收款、扣库存和现金交班
 - `/inventory`：库存余额与不可变流水查询
 - `/settings`：颜色、分类、供应商、员工和审计
 
@@ -55,7 +59,7 @@ npm run dev:netlify
 
 ## 权限与数据一致性
 
-- 岗位包括 Owner、System Admin、Warehouse Manager、Warehouse Staff、Product Operator、Order & CS、Buyer、Finance 和 Cashier。
+- 岗位包括 Owner、System Admin、Warehouse Manager、Warehouse Staff、Product Operator、Order & CS、Buyer、Finance、Auditor 和 Cashier。
 - 页面守卫、服务端操作、RLS、Storage Policy 和 RPC 同时校验权限。
 - 可售库存为 `on_hand - reserved - safety_stock`，不小于零。
 - 库存余额来自唯一 `inventory` 表，`inventory_balances` 只是安全视图；库存事实来自不可变 `inventory_movements`。
@@ -77,6 +81,12 @@ npm run dev:netlify
 
 当前退款适配器仅记录内部授权结果，不代表真实支付网关清算；没有保存银行卡数据，也没有伪造邮件、短信或承运商发送成功。详细说明见 `docs/PHASE_4.md`。
 
+## 第五阶段：采购、经营财务与 POS
+
+采购单按 `draft → approved → ordered → partially_received → received` 流转，仓库通过 `rpc_receive_purchase_order` 分批收货并原子更新统一库存和加权平均成本。POS 通过 `rpc_complete_pos_sale` 复用订单、付款和库存模型；费用、采购付款、线上收款、POS 收款和退款形成不可覆盖的 `financial_entries`。
+
+老板看板与财务中心共用 `rpc_business_metrics`，所有日期边界使用 Europe/Rome。经营财务是内部管理账，不替代意大利法定会计、IVA、SDI 或税控收银设备。详细口径见 `docs/PHASE_5.md`。
+
 ## 测试与质量门禁
 
 ```powershell
@@ -92,7 +102,7 @@ npm test
 npm run build:netlify
 ```
 
-数据库 A08–A10 行为测试位于 `supabase/tests/phase4_order_fulfillment_returns.sql`。它在一个事务中临时建立商品、库存、配送、自提与退货数据，断言完成后执行 `ROLLBACK`。
+数据库 A08–A13 行为测试位于 `supabase/tests/`。它们在事务中临时建立商品、库存、订单、采购、费用与 POS 数据，断言完成后执行 `ROLLBACK`。
 
 ## Netlify 部署准备
 
@@ -109,5 +119,6 @@ npm run build:netlify
 ## 当前限制
 
 - 暂不支持真实支付回调、承运商 API、邮件/短信发送、复杂波次拣货、多包裹拆单和部分取消。
-- 采购、经营财务、老板指标与 POS 完整功能属于第五阶段。
+- POS V1 需要网络连接，尚未实现离线队列、法定税控小票或真实发票接口。
+- 财务中心是经营管理账，正式会计、IVA、SDI 和银行对账仍需外部法定系统。
 - 旧枚举/表名作为无损升级兼容层保留；新代码使用正式视图和受控 RPC。

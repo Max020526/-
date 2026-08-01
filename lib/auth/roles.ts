@@ -9,6 +9,7 @@ export const INTERNAL_ROLES = [
   "order_cs",
   "buyer",
   "finance",
+  "auditor",
   "cashier",
 ] as const;
 
@@ -25,6 +26,7 @@ export const ROLE_LABELS: Record<InternalRole, string> = {
   order_cs: "订单与客服",
   buyer: "采购",
   finance: "财务",
+  auditor: "审计员",
   cashier: "收银员",
 };
 
@@ -44,6 +46,7 @@ export const ADMIN_ROLES: readonly InternalRole[] = [
   "order_cs",
   "buyer",
   "finance",
+  "auditor",
 ];
 
 const SYSTEM_ADMIN_ROLES: readonly InternalRole[] = ["owner", "system_admin"];
@@ -67,8 +70,9 @@ export const INTERNAL_ROUTE_RULES: Array<{
   { prefix: "/admin/products", roles: ["owner", "system_admin", "product_operator"] },
   { prefix: "/admin/orders", roles: ["owner", "system_admin", "order_cs"] },
   { prefix: "/admin/returns", roles: ["owner", "system_admin", "order_cs"] },
-  { prefix: "/admin/purchasing", roles: ["owner", "system_admin", "buyer"] },
-  { prefix: "/admin/finance", roles: ["owner", "system_admin", "finance"] },
+  { prefix: "/admin/purchasing", roles: ["owner", "system_admin", "buyer", "finance", "auditor"] },
+  { prefix: "/admin/finance", roles: ["owner", "system_admin", "finance", "auditor"] },
+  { prefix: "/admin/business", roles: ["owner", "system_admin", "finance", "auditor"] },
   { prefix: "/admin/inventory", roles: ["owner", "system_admin", "warehouse_manager", "product_operator", "buyer", "finance"] },
   { prefix: "/admin", roles: ADMIN_ROLES },
   { prefix: "/dashboard", roles: ADMIN_ROLES },
@@ -96,7 +100,25 @@ export function normalizeInternalRole(value: string | null | undefined): Interna
 }
 
 export function defaultInternalRoute(role: InternalRole) {
-  return ADMIN_ROLES.includes(role) ? "/admin" : "/warehouse";
+  switch (role) {
+    case "buyer":
+      return "/admin/purchasing";
+    case "finance":
+    case "auditor":
+      return "/admin/business";
+    case "product_operator":
+      return "/admin/products";
+    case "order_cs":
+      return "/admin/orders";
+    case "cashier":
+      return "/warehouse/pos";
+    case "warehouse_manager":
+    case "warehouse_staff":
+      return "/warehouse";
+    case "owner":
+    case "system_admin":
+      return "/admin";
+  }
 }
 
 export function isInternalRole(value: string | null | undefined): value is StoredInternalRole {

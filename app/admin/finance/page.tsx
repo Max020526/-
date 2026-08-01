@@ -1,7 +1,6 @@
-import { PlannedWorkspace } from "@/components/shared/planned-workspace";
-import { WORKSPACES } from "@/lib/workspaces";
+import { FinanceCenter } from "@/components/finance/finance-center";
+import { PageHead } from "@/components/shared/page-head";
 
 export default function FinanceWorkspacePage() {
-  const workspace = WORKSPACES.find((item) => item.code === "P06")!;
-  return <PlannedWorkspace workspace={workspace} backHref="/admin" backLabel="返回经营首页" capabilities={["订单收款和退款", "采购应付与付款", "渠道结算差异", "日结、月结与审计导出"]} />;
+  return <main className="page"><PageHead eyebrow="P06 · MANAGEMENT FINANCE" title="经营财务中心" subtitle="收入、退款、费用、采购付款和毛利均可下钻到来源单据。" /><FinanceCenter /></main>;
 }

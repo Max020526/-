@@ -1,7 +1,6 @@
-import { PlannedWorkspace } from "@/components/shared/planned-workspace";
-import { WORKSPACES } from "@/lib/workspaces";
+import { PosRegister } from "@/components/pos/pos-register";
+import { PageHead } from "@/components/shared/page-head";
 
 export default function PosWorkspacePage() {
-  const workspace = WORKSPACES.find((item) => item.code === "P08")!;
-  return <PlannedWorkspace workspace={workspace} backHref="/warehouse" backLabel="返回作业首页" capabilities={["门店扫码开单", "现金与电子支付", "销售出库原子事务", "门店退货与库存恢复"]} />;
+  return <main className="page"><PageHead eyebrow="P08 · POS" title="门店 POS" subtitle="开班、扫码销售、多方式收款、统一库存扣减和现金差异审计。" /><PosRegister /></main>;
 }

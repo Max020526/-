@@ -1,7 +1,6 @@
-import { PlannedWorkspace } from "@/components/shared/planned-workspace";
-import { WORKSPACES } from "@/lib/workspaces";
+import { PurchasingCenter } from "@/components/purchasing/purchasing-center";
+import { PageHead } from "@/components/shared/page-head";
 
 export default function PurchasingWorkspacePage() {
-  const workspace = WORKSPACES.find((item) => item.code === "P05")!;
-  return <PlannedWorkspace workspace={workspace} backHref="/admin" backLabel="返回经营首页" capabilities={["采购单与到货计划", "供应商和采购价", "采购入库关联", "采购退货与应付对账"]} />;
+  return <main className="page"><PageHead eyebrow="P05 · PURCHASING" title="采购管理" subtitle="供应商、采购审批、到货计划与部分收货使用统一库存和成本模型。" /><PurchasingCenter /></main>;
 }
