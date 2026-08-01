@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, ExternalLink, LoaderCircle, LockKeyhole, Mail } from "lucide-react";
 import { getSupabase } from "@/lib/supabase/client";
 import { SetupBanner } from "@/components/shared/setup-banner";
-import { defaultInternalRoute, normalizeInternalRole } from "@/lib/auth/roles";
+import { defaultInternalRoute, normalizeInternalRole, safeInternalNextPath } from "@/lib/auth/roles";
 
 type Mode = "login" | "forgot";
 const CUSTOMER_SITE = "https://nexora-studio-shop.xrx020526.chatgpt.site";
@@ -40,7 +40,12 @@ export default function Login() {
       setLoading(false);
       return;
     }
-    const { data: profile } = await client.from("profiles").select("role,is_active").eq("id", login.user.id).maybeSingle();
+    const { data: profile, error: profileError } = await client.from("profiles").select("role,is_active").eq("id", login.user.id).maybeSingle();
+    if (profileError) {
+      setMessage("登录成功，但暂时无法读取岗位权限，请检查网络后重试。");
+      setLoading(false);
+      return;
+    }
     if (profile?.is_active === false) {
       await client.auth.signOut();
       setMessage("该账号已停用，请联系管理员。");
@@ -48,13 +53,17 @@ export default function Login() {
       return;
     }
 
-    setMessage("登录成功，正在返回系统…");
-    setLoading(false);
-    const requested = new URLSearchParams(location.search).get("next");
-    const safeRequested = requested?.startsWith("/") && !requested.startsWith("//") ? requested : null;
     const role = normalizeInternalRole(profile?.role);
-    const destination = role ? safeRequested ?? defaultInternalRoute(role) : "/";
-    setTimeout(() => location.assign(destination), 600);
+    if (!profile || !role) {
+      setMessage("账号尚未分配内部岗位，请联系管理员完成账号设置。");
+      setLoading(false);
+      return;
+    }
+
+    setMessage("登录成功，正在进入工作区…");
+    const requested = new URLSearchParams(location.search).get("next");
+    const destination = safeInternalNextPath(requested, role) ?? defaultInternalRoute(role);
+    location.replace(destination);
   }
 
   return <main className="portal-page" style={{ display: "grid", placeItems: "center" }}>

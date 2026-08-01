@@ -121,6 +121,22 @@ export function defaultInternalRoute(role: InternalRole) {
   }
 }
 
+export function safeInternalNextPath(value: string | null | undefined, role: InternalRole) {
+  if (!value || !value.startsWith("/") || value.startsWith("//")) return null;
+
+  let url: URL;
+  try {
+    url = new URL(value, "https://internal.nexora.local");
+  } catch {
+    return null;
+  }
+
+  if (url.origin !== "https://internal.nexora.local") return null;
+  const allowedRoles = allowedInternalRoles(url.pathname);
+  if (!allowedRoles?.includes(role)) return null;
+  return `${url.pathname}${url.search}${url.hash}`;
+}
+
 export function isInternalRole(value: string | null | undefined): value is StoredInternalRole {
   return normalizeInternalRole(value) !== null;
 }

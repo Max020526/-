@@ -9,7 +9,14 @@ function redirectToLogin(request: NextRequest) {
   url.pathname = "/login";
   url.search = "";
   url.searchParams.set("next", `${request.nextUrl.pathname}${request.nextUrl.search}`);
-  return NextResponse.redirect(url);
+  return withPrivateCacheHeaders(NextResponse.redirect(url));
+}
+
+function withPrivateCacheHeaders<T extends NextResponse>(response: T) {
+  response.headers.set("Cache-Control", "private, no-cache, no-store, must-revalidate, max-age=0");
+  response.headers.set("Pragma", "no-cache");
+  response.headers.set("Expires", "0");
+  return response;
 }
 
 export async function updateSession(request: NextRequest) {
@@ -19,15 +26,18 @@ export async function updateSession(request: NextRequest) {
   const config = getPublicSupabaseConfig();
   if (!config) return redirectToLogin(request);
 
-  let response = NextResponse.next({ request });
+  let response = withPrivateCacheHeaders(NextResponse.next({ request }));
   const supabase = createServerClient<Database>(config.url, config.publishableKey, {
     cookies: {
       getAll: () => request.cookies.getAll(),
-      setAll(cookiesToSet) {
+      setAll(cookiesToSet, headersToSet) {
         for (const { name, value } of cookiesToSet) request.cookies.set(name, value);
-        response = NextResponse.next({ request });
+        response = withPrivateCacheHeaders(NextResponse.next({ request }));
         for (const { name, value, options } of cookiesToSet) {
           response.cookies.set(name, value, options);
+        }
+        for (const [name, value] of Object.entries(headersToSet)) {
+          response.headers.set(name, value);
         }
       },
     },
@@ -49,7 +59,7 @@ export async function updateSession(request: NextRequest) {
     url.pathname = profile?.is_active === false ? "/login" : "/forbidden";
     url.search = "";
     if (profile?.is_active === false) url.searchParams.set("error", "inactive");
-    return NextResponse.redirect(url);
+    return withPrivateCacheHeaders(NextResponse.redirect(url));
   }
 
   return response;

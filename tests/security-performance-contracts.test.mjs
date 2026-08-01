@@ -21,6 +21,18 @@ test("all internal user surfaces pass through the authentication proxy", async (
   }
 });
 
+test("login redirects stay inside role-authorized workspaces and auth responses are not cached", async () => {
+  const login = await source("app/login/page.tsx");
+  const roles = await source("lib/auth/roles.ts");
+  const authProxy = await source("lib/supabase/proxy.ts");
+  assert.match(login, /safeInternalNextPath/);
+  assert.match(login, /location\.replace\(destination\)/);
+  assert.doesNotMatch(login, /setTimeout\(\(\) => location\.assign/);
+  assert.match(roles, /allowedInternalRoles\(url\.pathname\)/);
+  assert.match(authProxy, /headersToSet/);
+  assert.match(authProxy, /private, no-cache, no-store/);
+});
+
 test("admin user mutations enforce origin, size and self-role protections", async () => {
   const route = await source("app/api/admin/users/route.ts");
   assert.match(route, /isSameOrigin\(request\)/);
@@ -40,6 +52,13 @@ test("both deployment targets define baseline browser security headers", async (
   }
 });
 
+test("development diagnostics do not weaken the production content security policy", async () => {
+  const config = await source("next.config.ts");
+  assert.match(config, /NODE_ENV === "development"/);
+  assert.match(config, /unsafe-eval/);
+  assert.match(config, /: "script-src 'self' 'unsafe-inline'"/);
+});
+
 test("quick inbound uses one model number with multiple color rows and custom colors", async () => {
   const page = await source("app/inbound/new/page.tsx");
   assert.match(page, /一个款号可一次录入多种颜色/);
@@ -55,6 +74,12 @@ test("warehouse and admin mobile navigation remain separate and can switch porta
   assert.match(shell, /href: "\/warehouse\/receipts\/new", label: "新建到货单"/);
   assert.match(shell, /href: "\/inbound\/new", label: "经理快速过账"/);
   assert.match(shell, /href: "\/admin\/orders", label: "订单"/);
+});
+
+test("the install prompt never covers login or port selection", async () => {
+  const installPrompt = await source("components/shared/pwa-install.tsx");
+  assert.match(installPrompt, /isInternalWorkspace/);
+  assert.match(installPrompt, /!visible \|\| !isInternalWorkspace/);
 });
 
 test("frontend products have one source of truth and legacy surfaces only redirect", async () => {

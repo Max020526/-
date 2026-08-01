@@ -1,6 +1,7 @@
 "use client";
 
 import { Download, Share, X } from "lucide-react";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 type InstallPromptEvent = Event & {
@@ -14,6 +15,7 @@ function isStandalone() {
 }
 
 export function PwaInstall() {
+  const pathname = usePathname();
   const [installPrompt, setInstallPrompt] = useState<InstallPromptEvent | null>(null);
   const [showIosHelp, setShowIosHelp] = useState(false);
   const [visible, setVisible] = useState(false);
@@ -66,7 +68,10 @@ export function PwaInstall() {
     setInstallPrompt(null);
   }
 
-  if (!visible) return null;
+  const isInternalWorkspace = ["/admin", "/warehouse", "/inbound", "/inventory", "/products", "/settings", "/me"]
+    .some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+
+  if (!visible || !isInternalWorkspace) return null;
 
   return (
     <aside className="pwa-install" aria-label="安装 NEXORA 应用">
