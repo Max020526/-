@@ -1,13 +1,15 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import { Boxes, ClipboardCheck, LoaderCircle, LockKeyhole, PackageCheck, Search, TriangleAlert } from "lucide-react";
+import { Boxes, ClipboardCheck, Download, LoaderCircle, LockKeyhole, PackageCheck, Search, TriangleAlert } from "lucide-react";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PageHead } from "@/components/shared/page-head";
 import { SetupBanner } from "@/components/shared/setup-banner";
 import { StatCard } from "@/components/shared/stat-card";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { getSupabase } from "@/lib/supabase/client";
+import { downloadCsv } from "@/lib/export/csv";
+import { friendlyError } from "@/lib/errors/friendly-error";
 
 type Mode = "warehouse" | "admin";
 type InventoryData = { rows: any[]; movements: any[] };
@@ -64,7 +66,7 @@ export function InventoryCenter({ mode }: { mode: Mode }) {
     const client = getSupabase(); if (!client) return;
     setWorking("adjust"); setMessage(null);
     const { data: result, error } = await client.rpc("adjust_inventory_stock", { p_inventory_id: selected.id, p_counted_quantity: next, p_reason: reason, p_notes: notes || undefined });
-    if (error) setMessage({ tone: "warning", text: error.message });
+    if (error) setMessage({ tone: "warning", text: friendlyError(error, "库存调整失败，请检查数量与权限。") });
     else {
       const response = result as { changed?: boolean; quantity_change?: number } | null;
       setMessage({ tone: "success", text: response?.changed === false ? "盘点数量与系统库存一致，无需调整。" : `库存调整成功，变动 ${Number(response?.quantity_change ?? 0) > 0 ? "+" : ""}${response?.quantity_change ?? 0} 件，流水已记录。` });
@@ -78,7 +80,7 @@ export function InventoryCenter({ mode }: { mode: Mode }) {
     const limit = drafts[row.id] ?? row.online_quantity_limit;
     setWorking(`limit:${row.id}`); setMessage(null);
     const { error } = await client.rpc("set_inventory_online_limit", { p_inventory_id: row.id, p_limit: limit });
-    if (error) setMessage({ tone: "warning", text: error.message });
+    if (error) setMessage({ tone: "warning", text: friendlyError(error, "网站库存上限更新失败。") });
     else {
       setMessage({ tone: "success", text: "网站可售上限已更新，顾客网站会按实际可用库存与该上限的较小值销售。" });
       setDrafts((current) => { const next = { ...current }; delete next[row.id]; return next; }); await refresh();
@@ -88,7 +90,7 @@ export function InventoryCenter({ mode }: { mode: Mode }) {
 
   const admin = mode === "admin";
   return <main className="page">
-    <PageHead eyebrow={admin ? "INVENTORY CONTROL" : "WAREHOUSE STOCKTAKE"} title={admin ? "库存控制中心" : "库存与盘点"} subtitle={admin ? "统一查看实际、占用、可用与网站库存，并保留每次调整记录。" : "按款号、SKU 或条形码查找库存，盘点修正会写入完整流水。"}/>
+    <PageHead eyebrow={admin ? "INVENTORY CONTROL" : "WAREHOUSE STOCKTAKE"} title={admin ? "库存控制中心" : "库存与盘点"} subtitle={admin ? "统一查看实际、占用、可用与网站库存，并保留每次调整记录。" : "按款号、SKU 或条形码查找库存，盘点修正会写入完整流水。"} action={admin ? <button className="button" onClick={() => downloadCsv(`nexora-inventory-${new Date().toISOString().slice(0,10)}.csv`, ["款号","SKU","商品名称","颜色","尺码","仓库","实际库存","预留库存","可售库存","低库存阈值","更新时间"], rows.map((row) => { const variant = row.product_variants; return [variant?.products?.style_no, variant?.sku, variant?.products?.name, variant?.colors?.name, variant?.sizes?.name, row.warehouses?.name, row.quantity_on_hand, row.quantity_reserved, row.quantity_available, row.low_stock_threshold, row.updated_at]; }))}><Download size={15}/>导出库存</button> : undefined}/>
     <SetupBanner/>
     {message && <div className={`notice ${message.tone === "warning" ? "warning" : ""}`}>{message.text}</div>}
     <section className="stats-grid">

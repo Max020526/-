@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Bell, Boxes, ChevronRight, ClipboardList, ExternalLink, Home, LayoutDashboard, Menu, PackageCheck, Palette, PlusCircle, Settings, ShoppingBag, Tags, Truck, UserCog } from "lucide-react";
+import { BarChart3, Bell, Boxes, ChevronRight, ClipboardList, ExternalLink, Home, LayoutDashboard, Menu, PackageCheck, Palette, PlusCircle, Settings, ShieldCheck, ShoppingBag, Tags, Truck, UserCog } from "lucide-react";
 import type { Portal } from "@/lib/constants";
 import { CurrentUser } from "@/components/shared/current-user";
 
@@ -16,7 +16,7 @@ const nav = {
     { section:"经营管理", links:[{href:"/admin",label:"数据仪表盘",icon:LayoutDashboard},{href:"/admin/orders",label:"订单管理",icon:ShoppingBag}]},
     { section:"商品管理", links:[{href:"/admin/products/new",label:"新建并上架",icon:PlusCircle},{href:"/admin/products/pending",label:"待完善商品",icon:PackageCheck},{href:"/admin/products",label:"全部商品",icon:Boxes}]},
     { section:"库存管理", links:[{href:"/admin/inventory",label:"库存控制中心",icon:ClipboardList},{href:"/warehouse/receipts",label:"查看入库记录",icon:Truck}]},
-    { section:"系统设置", links:[{href:"/settings/colors",label:"颜色管理",icon:Palette},{href:"/settings/categories",label:"分类管理",icon:Tags},{href:"/settings/suppliers",label:"供应商管理",icon:Settings},{href:"/settings/users",label:"员工管理",icon:UserCog}]},
+    { section:"系统设置", links:[{href:"/settings/colors",label:"颜色管理",icon:Palette},{href:"/settings/categories",label:"分类管理",icon:Tags},{href:"/settings/suppliers",label:"供应商管理",icon:Settings},{href:"/settings/users",label:"员工管理",icon:UserCog},{href:"/settings/audit",label:"操作日志",icon:ShieldCheck}]},
     { section:"系统入口", links:[{href:"/warehouse",label:"前往入库端",icon:PackageCheck},{href:"https://nexora-studio-shop.xrx020526.chatgpt.site",label:"打开顾客网站",icon:ExternalLink,external:true},{href:"/",label:"切换端口",icon:Menu}]},
   ],
 };
