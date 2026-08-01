@@ -182,6 +182,28 @@ docs/                   基线审查、端口规划、验收与部署说明
 ## 当前限制
 
 - 旧版表名仍保留以支持无损升级；新代码应使用 Canonical 视图/RPC。物理表重命名应在独立维护窗口完成，不应与业务上线同时进行。
-- 第一阶段没有完整商城、支付、订单履约、财务、POS、采购单、退货退款、批发客户或第三方渠道同步。
+- 第三阶段已完成独立零售商城和安全下单；真实支付、订单履约、财务、POS、采购单、退货退款、批发客户与第三方渠道同步仍未开发。
 - 当前自动化数据库测试以迁移契约为主；上线前仍需在 Supabase 开发分支执行真实 RLS/RPC 并发测试。
 - 泄露密码检测是 Supabase 控制台项目设置，代码不能替用户安全地开启。
+
+## 第三阶段零售商城
+
+独立商城位于 `customer-store/`（独立 Git 仓库），使用同一个 Supabase 项目，但浏览器只能调用安全目录与订单 RPC。商城包含商品浏览、筛选、详情、购物袋、顾客账号、地址、匿名/登录结账、订单确认和访客查询。
+
+第三阶段数据库迁移：
+
+- `20260801180000_phase3_storefront_orders.sql`
+- `20260801181000_phase3_pgcrypto_namespace.sql`
+- `20260801182000_phase3_advisor_indexes.sql`
+
+本地验证：
+
+```powershell
+cd customer-store
+npm run lint
+npm run typecheck
+npm test
+npm run build:netlify
+```
+
+当前未执行生产部署；上线前请配置商城的 Supabase URL、publishable key、站点 URL 和内部媒体 API URL，并完成域名与 Auth Redirect URL 核对。
