@@ -13,7 +13,7 @@
     "build:netlify": "next build",
     "start:netlify": "next start",
     "typecheck": "tsc --noEmit",
-    "test": "npm run build && node --test tests/rendered-html.test.mjs tests/database-foundation.test.mjs && node --experimental-strip-types --test tests/parser.test.ts tests/supabase-config.test.ts tests/auth-roles.test.ts tests/inbound-validation.test.ts tests/csv.test.ts tests/friendly-error.test.ts",
+    "test": "npm run build && node --test tests/rendered-html.test.mjs tests/database-foundation.test.mjs tests/security-performance-contracts.test.mjs && node --experimental-strip-types --test tests/parser.test.ts tests/supabase-config.test.ts tests/auth-roles.test.ts tests/inbound-validation.test.ts tests/csv.test.ts tests/friendly-error.test.ts",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next --ignore-pattern customer-store",
     "db:generate": "drizzle-kit generate"
   },

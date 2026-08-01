@@ -13,6 +13,8 @@ export const config = {
     "/inbound/:path*",
     "/products/:path*",
     "/inventory/:path*",
+    "/catalog/:path*",
+    "/me/:path*",
     "/settings/:path*",
   ],
 };

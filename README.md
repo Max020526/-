@@ -130,6 +130,17 @@ npm test
 
 上线前还应在已连接的 Supabase 项目运行数据库 Advisors，并完成角色权限、两次点击幂等、并发下单、取消释放与发货扣减测试。
 
+## 安全与性能基线
+
+- 内部页面统一通过会话代理校验，管理操作同时受服务端身份检查与 Supabase RLS 保护。
+- 管理员账号写接口要求同源 JSON 请求、限制请求体大小，并阻止当前管理员停用或移除自己的管理员角色。
+- Next.js/Netlify 与 Sites Worker 两条部署链路均发送 CSP、HSTS、点击劫持、MIME 嗅探和浏览器权限安全头。
+- 共用数据查询 Hook 会取消过期响应，内联空数组不会触发重复请求循环。
+- 商品和 OCR 图片限制格式、文件大小与解码像素数，避免超大图片耗尽设备内存。
+- 管理员创建的临时密码要求 12 至 128 位；建议在 Supabase Auth 控制台启用泄露密码检测和 MFA。
+
+本轮审计记录见 `docs/SECURITY_PERFORMANCE_AUDIT_2026-08-01.md`。
+
 ## Netlify 部署
 
 仓库已提供 `netlify.toml`。将 Git 仓库连接到 Netlify 后，平台会执行 `npm run build:netlify` 并发布 Next.js 输出。请在 Netlify 项目设置中添加：

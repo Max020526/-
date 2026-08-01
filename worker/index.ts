@@ -19,14 +19,18 @@ interface ExecutionContext {
   passThroughOnException(): void;
 }
 
-function withSecurityHeaders(response: Response) {
+function withSecurityHeaders(response: Response, request: Request) {
   const headers = new Headers(response.headers);
   headers.set("Content-Security-Policy", "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.supabase.co; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co; worker-src 'self' blob:; media-src 'self' blob:; manifest-src 'self'; upgrade-insecure-requests");
-  headers.set("Strict-Transport-Security", "max-age=31536000");
+  headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
   headers.set("X-Content-Type-Options", "nosniff");
   headers.set("X-Frame-Options", "DENY");
   headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   headers.set("Permissions-Policy", "camera=(self), microphone=(), geolocation=(), payment=(), usb=()");
+  headers.set("Cross-Origin-Opener-Policy", "same-origin");
+  headers.set("X-DNS-Prefetch-Control", "off");
+  headers.set("Origin-Agent-Cluster", "?1");
+  if (new URL(request.url).pathname.startsWith("/api/")) headers.set("Cache-Control", "no-store, max-age=0");
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 }
 
@@ -49,10 +53,10 @@ const worker = {
           return result.response();
         },
       }, allowedWidths);
-      return withSecurityHeaders(response);
+      return withSecurityHeaders(response, request);
     }
 
-    return withSecurityHeaders(await handler.fetch(request, env, ctx));
+    return withSecurityHeaders(await handler.fetch(request, env, ctx), request);
   },
 };
 

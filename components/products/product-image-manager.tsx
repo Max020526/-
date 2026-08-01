@@ -5,6 +5,7 @@
 import { ArrowDown, ArrowUp, ImagePlus, LoaderCircle, Star, Trash2 } from "lucide-react";
 import { ChangeEvent, useState } from "react";
 import { EmptyState } from "@/components/shared/empty-state";
+import { friendlyError } from "@/lib/errors/friendly-error";
 import { compressProductImage } from "@/lib/images/compress";
 import { getSupabase } from "@/lib/supabase/client";
 
@@ -28,22 +29,29 @@ export function ProductImageManager({ productId, productName, images, onChanged,
         if (dbError) { await client.storage.from("product-images").remove([path]); throw dbError; }
       }
       onMessage(`${files.length} 张图片上传成功`); onChanged();
-    } catch (error) { onMessage(error instanceof Error ? error.message : "图片上传失败，请重试。"); }
+    } catch (error) { onMessage(friendlyError(error, "图片上传失败，请重试。")); }
     finally { setWorking(false); event.target.value = ""; }
   }
 
   async function manage(imageId: string, action: "set_primary" | "move_up" | "move_down") {
     const client = getSupabase(); if (!client) return; setWorking(true);
     const { error } = await client.rpc("manage_product_image", { p_product_id: productId, p_image_id: imageId, p_action: action });
-    onMessage(error?.message ?? "图片设置已更新"); setWorking(false); if (!error) onChanged();
+    onMessage(error ? friendlyError(error, "图片设置失败，请重试。") : "图片设置已更新"); setWorking(false); if (!error) onChanged();
   }
 
   async function remove(image: Image) {
     if (!confirm("确认删除这张商品图片？删除后无法恢复。")) return;
     const client = getSupabase(); if (!client) return; setWorking(true);
-    const { error } = await client.storage.from("product-images").remove([image.file_path]);
-    if (!error) await client.from("product_images").delete().eq("id", image.id);
-    onMessage(error?.message ?? "图片已删除"); setWorking(false); if (!error) onChanged();
+    const { error: databaseError } = await client.from("product_images").delete().eq("id", image.id);
+    if (databaseError) {
+      onMessage(friendlyError(databaseError, "图片删除失败，请重试。"));
+      setWorking(false);
+      return;
+    }
+    const { error: storageError } = await client.storage.from("product-images").remove([image.file_path]);
+    onMessage(storageError ? "图片记录已删除，存储文件将在后续清理。" : "图片已删除");
+    setWorking(false);
+    onChanged();
   }
 
   return <section className="form-card"><div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}><div><strong>商品图片</strong><div className="muted" style={{ fontSize: 11, marginTop: 4 }}>手机可直接拍照；上传前自动压缩，支持 JPG / PNG / WEBP，单张最大 10MB。</div></div><label className="button primary">{working ? <LoaderCircle size={15}/> : <ImagePlus size={15}/>}拍照或上传<input className="sr-only" type="file" multiple capture="environment" accept="image/jpeg,image/png,image/webp" disabled={working} onChange={upload}/></label></div>

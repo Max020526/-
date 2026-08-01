@@ -1,10 +1,15 @@
 const MAX_EDGE = 2000;
 const TARGET_BYTES = 1_800_000;
+const MAX_SOURCE_PIXELS = 40_000_000;
 
 export async function compressProductImage(file: File) {
   if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) throw new Error("仅支持 JPG、PNG 或 WEBP 图片。");
   if (file.size > 10 * 1024 * 1024) throw new Error("单张图片不能超过 10MB。");
   const bitmap = await createImageBitmap(file);
+  if (!bitmap.width || !bitmap.height || bitmap.width * bitmap.height > MAX_SOURCE_PIXELS) {
+    bitmap.close();
+    throw new Error("图片尺寸过大或无效，请缩小后重新上传。");
+  }
   const ratio = Math.min(1, MAX_EDGE / Math.max(bitmap.width, bitmap.height));
   if (ratio === 1 && file.size <= TARGET_BYTES) { bitmap.close(); return file; }
   const canvas = document.createElement("canvas");

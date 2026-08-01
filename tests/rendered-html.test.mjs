@@ -40,4 +40,7 @@ test("adds browser security headers", async () => {
   assert.equal(response.headers.get("x-content-type-options"), "nosniff");
   assert.equal(response.headers.get("x-frame-options"), "DENY");
   assert.match(response.headers.get("permissions-policy") ?? "", /camera=\(self\)/);
+  assert.equal(response.headers.get("cross-origin-opener-policy"), "same-origin");
+  assert.equal(response.headers.get("x-dns-prefetch-control"), "off");
+  assert.match(response.headers.get("strict-transport-security") ?? "", /includeSubDomains/);
 });
