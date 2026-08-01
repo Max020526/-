@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { mergeInboundRows, normalizeModelNumber } from "../lib/validation/inbound.ts";
+import { mergeInboundRows, normalizeModelNumber, parseBatchText } from "../lib/validation/inbound.ts";
 
 test("normalizes model numbers and merges duplicate model-color rows", () => {
   const rows = [
@@ -9,6 +9,15 @@ test("normalizes model numbers and merges duplicate model-color rows", () => {
   ];
   assert.equal(normalizeModelNumber(rows[0].modelNumber), "DL30283");
   assert.deepEqual(mergeInboundRows(rows), [{ model_number: "DL30283", color_id: "black", quantity: 18 }]);
+});
+
+test("parses spreadsheet rows using Chinese names or SKU color codes", () => {
+  const colors = [{ id: "black", code: "BLK", name: "黑色", name_zh: "黑色", name_en: "Black" }];
+  const parsed = parseBatchText("DL30283\t黑色\t18\nBL30385,BLK,100", colors);
+  assert.deepEqual(parsed.map(({ modelNumber, colorId, quantity }) => ({ modelNumber, colorId, quantity })), [
+    { modelNumber: "DL30283", colorId: "black", quantity: "18" },
+    { modelNumber: "BL30385", colorId: "black", quantity: "100" },
+  ]);
 });
 
 test("rejects invalid quantities and unsafe model numbers", () => {

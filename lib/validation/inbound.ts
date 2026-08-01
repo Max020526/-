@@ -41,3 +41,24 @@ export function mergeInboundRows(rows: InboundDraftRow[]): ConfirmInboundItem[] 
   }
   return [...merged.values()];
 }
+
+export function splitBatchLine(line: string) {
+  return line.split(/\t|,|;/).map((cell) => cell.trim());
+}
+
+export function parseBatchText(
+  text: string,
+  colors: Array<{ id: string; code: string | null; name: string; name_zh: string | null; name_en?: string | null }>,
+) {
+  return text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean).map((line) => {
+    const [modelNumber = "", colorInput = "", quantity = ""] = splitBatchLine(line);
+    const normalizedColor = colorInput.toUpperCase();
+    const color = colors.find((item) =>
+      item.code?.toUpperCase() === normalizedColor
+      || item.name === colorInput
+      || item.name_zh === colorInput
+      || item.name_en?.toUpperCase() === normalizedColor,
+    );
+    return { key: crypto.randomUUID(), modelNumber, colorId: color?.id ?? "", quantity } satisfies InboundDraftRow;
+  });
+}

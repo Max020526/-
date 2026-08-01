@@ -8,7 +8,7 @@ import { CurrentUser } from "@/components/shared/current-user";
 
 const nav = {
   warehouse: [
-    { section:"入库作业", links:[{href:"/warehouse",label:"入库首页",icon:Home},{href:"/inbound/new",label:"快速入库",icon:PlusCircle},{href:"/warehouse/receipts/new",label:"OCR/货单入库",icon:PackageCheck},{href:"/warehouse/receipts",label:"入库记录",icon:ClipboardList}]},
+    { section:"入库作业", links:[{href:"/warehouse",label:"入库首页",icon:Home},{href:"/inbound/new",label:"快速入库",icon:PlusCircle},{href:"/inbound/batch",label:"批量入库",icon:ClipboardList},{href:"/warehouse/receipts/new",label:"OCR/货单入库",icon:PackageCheck},{href:"/warehouse/receipts",label:"入库记录",icon:Truck}]},
     { section:"库存", links:[{href:"/warehouse/inventory",label:"库存与盘点",icon:Boxes}]},
     { section:"系统入口", links:[{href:"/admin",label:"前往管理端",icon:BarChart3},{href:"https://nexora-studio-shop.xrx020526.chatgpt.site",label:"打开顾客网站",icon:ExternalLink,external:true},{href:"/",label:"切换端口",icon:Menu}]},
   ],
