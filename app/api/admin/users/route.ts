@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { canManageUsers, INTERNAL_ROLES, normalizeInternalRole } from "@/lib/auth/roles";
 
 const MAX_BODY_BYTES = 8 * 1024;
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -17,8 +18,10 @@ async function authorized() {
   const client = await createSupabaseServerClient();
   const { data } = await client.auth.getUser();
   if (!data.user) return null;
-  const { data: profile } = await client.from("profiles").select("role,is_active").eq("id", data.user.id).maybeSingle();
-  return profile?.role === "admin" && profile.is_active ? data.user : null;
+  const { data: profile } = await client.from("profiles").select("role,is_active,organization_id").eq("id", data.user.id).maybeSingle();
+  return profile?.is_active && profile.organization_id && canManageUsers(normalizeInternalRole(profile.role))
+    ? { id: data.user.id, organizationId: profile.organization_id }
+    : null;
 }
 
 function isSameOrigin(request: Request) {
@@ -66,14 +69,17 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  if (!await authorized()) return json({ error: "没有管理员权限。" }, 403);
+  const actor = await authorized();
+  if (!actor) return json({ error: "没有管理员权限。" }, 403);
   const parsed = await readBody(request);
   if ("response" in parsed) return parsed.response;
 
   const email = typeof parsed.body.email === "string" ? parsed.body.email.trim().toLowerCase() : "";
   const password = typeof parsed.body.password === "string" ? parsed.body.password : "";
   const fullName = typeof parsed.body.full_name === "string" ? parsed.body.full_name.trim() : "";
-  const role = parsed.body.role === "admin" ? "admin" : "employee";
+  const role = typeof parsed.body.role === "string" && INTERNAL_ROLES.some((item) => item === parsed.body.role)
+    ? parsed.body.role
+    : "warehouse_staff";
   if (!EMAIL_PATTERN.test(email) || email.length > 254 || password.length < 12 || password.length > 128 || !fullName || fullName.length > 100) {
     return json({ error: "请填写姓名、有效邮箱和 12 至 128 位的临时密码。" }, 400);
   }
@@ -82,7 +88,7 @@ export async function POST(request: Request) {
     const admin = createSupabaseAdminClient();
     const { data, error } = await admin.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { full_name: fullName } });
     if (error || !data.user) return json({ error: error?.message.toLowerCase().includes("registered") ? "该邮箱已经注册。" : "创建员工账号失败。" }, 400);
-    const { error: profileError } = await admin.from("profiles").upsert({ id: data.user.id, full_name: fullName, role, is_active: true });
+    const { error: profileError } = await admin.from("profiles").upsert({ id: data.user.id, organization_id: actor.organizationId, full_name: fullName, role, is_active: true });
     if (profileError) {
       await admin.auth.admin.deleteUser(data.user.id);
       throw profileError;
@@ -103,10 +109,10 @@ export async function PATCH(request: Request) {
   const fullName = typeof parsed.body.full_name === "string" ? parsed.body.full_name.trim() : "";
   const role = typeof parsed.body.role === "string" ? parsed.body.role : "";
   const isActive = parsed.body.is_active !== false;
-  if (!UUID_PATTERN.test(id) || !fullName || fullName.length > 100 || !["employee", "admin"].includes(role)) {
+  if (!UUID_PATTERN.test(id) || !fullName || fullName.length > 100 || !INTERNAL_ROLES.some((item) => item === role)) {
     return json({ error: "员工资料不完整或格式无效。" }, 400);
   }
-  if (id === actor.id && (!isActive || role !== "admin")) {
+  if (id === actor.id && (!isActive || !canManageUsers(normalizeInternalRole(role)))) {
     return json({ error: "不能停用当前账号或移除自己的管理员角色。" }, 400);
   }
 

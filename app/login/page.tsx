@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ArrowLeft, ExternalLink, LoaderCircle, LockKeyhole, Mail } from "lucide-react";
 import { getSupabase } from "@/lib/supabase/client";
 import { SetupBanner } from "@/components/shared/setup-banner";
-import { defaultInternalRoute, isInternalRole } from "@/lib/auth/roles";
+import { defaultInternalRoute, normalizeInternalRole } from "@/lib/auth/roles";
 
 type Mode = "login" | "forgot";
 const CUSTOMER_SITE = "https://nexora-studio-shop.xrx020526.chatgpt.site";
@@ -52,7 +52,8 @@ export default function Login() {
     setLoading(false);
     const requested = new URLSearchParams(location.search).get("next");
     const safeRequested = requested?.startsWith("/") && !requested.startsWith("//") ? requested : null;
-    const destination = isInternalRole(profile?.role) ? safeRequested ?? defaultInternalRoute(profile.role) : "/shop";
+    const role = normalizeInternalRole(profile?.role);
+    const destination = role ? safeRequested ?? defaultInternalRoute(role) : "/";
     setTimeout(() => location.assign(destination), 600);
   }
 
@@ -63,7 +64,7 @@ export default function Login() {
         <span className="brand-mark" style={{ margin: "auto" }}>N</span>
         <p className="eyebrow" style={{ marginTop: 16 }}>INTERNAL SECURE ACCESS</p>
         <h1 style={{ fontSize: 27, margin: "8px 0" }}>{mode === "login" ? "登录 NEXORA" : "重设密码"}</h1>
-        <p className="muted" style={{ fontSize: 12 }}>{mode === "forgot" ? "我们会向你的邮箱发送安全链接" : "仅供入库员工与管理员使用"}</p>
+        <p className="muted" style={{ fontSize: 12 }}>{mode === "forgot" ? "我们会向你的邮箱发送安全链接" : "系统将按岗位角色开放对应工作区"}</p>
       </div>
       <SetupBanner/>
       <form onSubmit={submit}>

@@ -1193,6 +1193,7 @@ export type Database = {
           full_name: string | null
           id: string
           is_active: boolean
+          organization_id: string
           phone: string | null
           role: string | null
           updated_at: string
@@ -1202,6 +1203,7 @@ export type Database = {
           full_name?: string | null
           id: string
           is_active?: boolean
+          organization_id: string
           phone?: string | null
           role?: string | null
           updated_at?: string
@@ -1211,6 +1213,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_active?: boolean
+          organization_id?: string
           phone?: string | null
           role?: string | null
           updated_at?: string
@@ -1808,6 +1811,7 @@ export type Database = {
           status: Database["public"]["Enums"]["receipt_status"]
           supplier_id: string | null
           warehouse_id: string
+          workflow_status: string
         }
         Insert: {
           confirmed_at?: string | null
@@ -1826,6 +1830,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["receipt_status"]
           supplier_id?: string | null
           warehouse_id: string
+          workflow_status?: string
         }
         Update: {
           confirmed_at?: string | null
@@ -1844,6 +1849,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["receipt_status"]
           supplier_id?: string | null
           warehouse_id?: string
+          workflow_status?: string
         }
         Relationships: [
           {
@@ -1993,9 +1999,36 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      inbound_receipts: {
+        Row: {
+          arrival_date: string
+          cancellation_reason: string | null
+          cancelled_at: string | null
+          created_at: string
+          created_by: string
+          expected_quantity: number
+          id: string
+          idempotency_key: string | null
+          location_id: string
+          location_name: string
+          notes: string | null
+          organization_id: string
+          party: string
+          posted_at: string | null
+          posted_by: string | null
+          receipt_no: string
+          received_quantity: number
+          source_mode: string
+          status: string
+          supplier_id: string | null
+          supplier_reference: string | null
+          updated_at: string
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      get_my_authorization: { Args: Record<PropertyKey, never>; Returns: Json }
       adjust_inventory_stock: {
         Args: {
           p_counted_quantity: number
@@ -2040,6 +2073,22 @@ export type Database = {
       }
       manage_product_image: {
         Args: { p_action: string; p_image_id: string; p_product_id: string }
+        Returns: Json
+      }
+      rpc_transition_inbound_receipt: {
+        Args: { p_reason?: string; p_receipt_id: string; p_target_status: string }
+        Returns: Json
+      }
+      rpc_post_inbound_receipt: {
+        Args: {
+          p_arrival_date?: string
+          p_idempotency_key?: string
+          p_items: Json
+          p_notes?: string
+          p_supplier_id?: string
+          p_supplier_reference?: string
+          p_warehouse_id?: string
+        }
         Returns: Json
       }
       publish_product: { Args: { p_product_id: string }; Returns: Json }

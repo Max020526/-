@@ -1,6 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { allowedInternalRoles, isInternalRole } from "@/lib/auth/roles";
+import { allowedInternalRoles, normalizeInternalRole } from "@/lib/auth/roles";
 import type { Database } from "@/types/database";
 import { getPublicSupabaseConfig } from "./config";
 
@@ -43,11 +43,12 @@ export async function updateSession(request: NextRequest) {
     .eq("id", userId)
     .maybeSingle();
 
-  if (!profile?.is_active || !isInternalRole(profile.role) || !roles.includes(profile.role)) {
+  const normalizedRole = normalizeInternalRole(profile?.role);
+  if (!profile?.is_active || !normalizedRole || !roles.includes(normalizedRole)) {
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
+    url.pathname = profile?.is_active === false ? "/login" : "/forbidden";
     url.search = "";
-    url.searchParams.set("error", profile?.is_active === false ? "inactive" : "forbidden");
+    if (profile?.is_active === false) url.searchParams.set("error", "inactive");
     return NextResponse.redirect(url);
   }
 

@@ -138,14 +138,15 @@ button { cursor:pointer; }
 /* Quick inbound: one model number with many colour rows. */
 .fast-model-card { display: grid; grid-template-columns: 1.15fr .85fr 1fr; gap: 16px; }
 .fast-color-list { display: grid; gap: 10px; }
-.fast-color-row { display: grid; grid-template-columns: 34px minmax(190px, 1fr) 120px minmax(145px, .65fr) 38px; gap: 10px; align-items: end; padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface-soft, #f8faf9); }
+.fast-color-row { display: grid; grid-template-columns: 34px minmax(180px, 1fr) 112px 105px minmax(170px, .7fr) 38px; gap: 10px; align-items: end; padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface-soft, #f8faf9); }
 .fast-color-index { width: 28px; height: 28px; align-self: center; display: grid; place-items: center; border-radius: 50%; background: #e4f2eb; color: #17633f; font-weight: 700; font-size: 12px; }
 .fast-sku-preview { min-height: 42px; display: flex; flex-direction: column; justify-content: center; }
 .fast-sku-preview span { color: var(--muted); font-size: 10px; }
 .fast-sku-preview strong { margin-top: 3px; font-size: 12px; overflow-wrap: anywhere; }
 @media (max-width: 760px) {
   .fast-model-card { grid-template-columns: 1fr; }
-  .fast-color-row { grid-template-columns: 30px minmax(0, 1fr) 92px 38px; }
+  .fast-color-row { grid-template-columns: 30px minmax(0, 1fr) 88px 38px; }
+  .fast-color-row .field:nth-of-type(3), .fast-color-row .fast-sku-preview { grid-column: 2 / 4; }
   .fast-color-row .field label { font-size: 10px; }
   .fast-sku-preview { grid-column: 2 / -1; grid-row: 2; min-height: 30px; }
 }

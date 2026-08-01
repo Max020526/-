@@ -4,10 +4,11 @@ import Link from "next/link";
 import { LoaderCircle, LockKeyhole, ShieldAlert } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getSupabase } from "@/lib/supabase/client";
+import { normalizeInternalRole, type InternalRole } from "@/lib/auth/roles";
 
 type GateState = "loading" | "signed-out" | "forbidden" | "allowed";
 
-export function AccessGate({ roles, children }: { roles: ReadonlyArray<"employee" | "admin">; children: React.ReactNode }) {
+export function AccessGate({ roles, children }: { roles: readonly InternalRole[]; children: React.ReactNode }) {
   const [state, setState] = useState<GateState>("loading");
 
   useEffect(() => {
@@ -18,7 +19,8 @@ export function AccessGate({ roles, children }: { roles: ReadonlyArray<"employee
       const { data: auth } = await client.auth.getUser();
       if (!auth.user) { if (active) setState("signed-out"); return; }
       const { data } = await client.from("profiles").select("role,is_active").eq("id", auth.user.id).maybeSingle();
-      if (active) setState(data?.is_active && data.role && roles.includes(data.role as "employee" | "admin") ? "allowed" : "forbidden");
+      const role = normalizeInternalRole(data?.role);
+      if (active) setState(data?.is_active && role && roles.includes(role) ? "allowed" : "forbidden");
     })();
     return () => { active = false; };
   }, [roles]);

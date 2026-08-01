@@ -11,19 +11,26 @@ import { mergeInboundRows, normalizeModelNumber, type InboundDraftRow } from "@/
 import type { Json } from "@/types/database";
 
 type Color = { id: string; name_zh: string | null; name: string; code: string | null };
-type ColorLine = { key: string; colorId: string; quantity: string };
+type Size = { id: string; name: string; normalized_name: string };
+type ColorLine = { key: string; colorId: string; sizeId: string; quantity: string };
 type Warehouse = { id: string; name: string; code: string };
+type Supplier = { id: string; name: string };
 type Success = { inbound_order_id: string; inbound_number: string; total_quantity: number; current_stock_total?: number; new_products?: number; new_variants?: number };
 
-const makeLine = (colorId = ""): ColorLine => ({ key: crypto.randomUUID(), colorId, quantity: "" });
+const makeLine = (colorId = "", sizeId = ""): ColorLine => ({ key: crypto.randomUUID(), colorId, sizeId, quantity: "" });
 
 export default function FastInboundPage() {
   const [modelNumber, setModelNumber] = useState("");
   const [lines, setLines] = useState<ColorLine[]>([]);
   const [colors, setColors] = useState<Color[]>([]);
+  const [sizes, setSizes] = useState<Size[]>([]);
   const [colorSearch, setColorSearch] = useState("");
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [warehouseId, setWarehouseId] = useState("");
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [supplierId, setSupplierId] = useState("");
+  const [supplierReference, setSupplierReference] = useState("");
+  const [arrivalDate, setArrivalDate] = useState(new Date().toISOString().slice(0, 10));
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -52,14 +59,21 @@ export default function FastInboundPage() {
       const client = getSupabase();
       if (!client) { setMessage("系统尚未连接 Supabase。"); setLoading(false); return; }
       try {
-        const [, warehouseResult] = await Promise.all([
+        const [, warehouseResult, sizeResult, supplierResult] = await Promise.all([
           loadColors(),
           client.from("warehouses").select("id,name,code").eq("is_active", true).order("created_at"),
+          client.from("sizes").select("id,name,normalized_name").eq("is_active", true).order("sort_order"),
+          client.from("suppliers").select("id,name").eq("is_active", true).is("deleted_at", null).order("name"),
         ]);
-        if (warehouseResult.error) throw warehouseResult.error;
+        if (warehouseResult.error || sizeResult.error || supplierResult.error) throw warehouseResult.error ?? sizeResult.error ?? supplierResult.error;
         const nextWarehouses = (warehouseResult.data ?? []) as Warehouse[];
         setWarehouses(nextWarehouses);
         setWarehouseId(nextWarehouses[0]?.id ?? "");
+        const nextSizes = (sizeResult.data ?? []) as Size[];
+        setSizes(nextSizes);
+        setSuppliers((supplierResult.data ?? []) as Supplier[]);
+        const defaultSize = nextSizes.find((size) => size.normalized_name === "ONE_SIZE")?.id ?? nextSizes[0]?.id ?? "";
+        setLines([makeLine("", defaultSize)]);
       } catch (error) {
         setMessage(friendlyError(error, "基础资料加载失败，请刷新页面重试。"));
       } finally {
@@ -79,12 +93,13 @@ export default function FastInboundPage() {
     }
   }, [draftRows]);
 
-  function updateLine(key: string, field: "colorId" | "quantity", value: string) {
+  function updateLine(key: string, field: "colorId" | "sizeId" | "quantity", value: string) {
     setLines((current) => current.map((line) => line.key === key ? { ...line, [field]: value } : line));
   }
 
   function addLine(colorId = "") {
-    setLines((current) => [...current, makeLine(colorId)]);
+    const defaultSize = sizes.find((size) => size.normalized_name === "ONE_SIZE")?.id ?? sizes[0]?.id ?? "";
+    setLines((current) => [...current, makeLine(colorId, defaultSize)]);
   }
 
   async function createColor() {
@@ -123,10 +138,13 @@ export default function FastInboundPage() {
     if (!client) return;
     setSaving(true);
     setMessage("");
-    const { data, error } = await client.rpc("confirm_inbound_order", {
+    const { data, error } = await client.rpc("rpc_post_inbound_receipt", {
       p_items: summary.items as unknown as Json,
       p_notes: notes || undefined,
       p_warehouse_id: warehouseId || undefined,
+      p_supplier_id: supplierId || undefined,
+      p_supplier_reference: supplierReference || undefined,
+      p_arrival_date: arrivalDate,
       p_idempotency_key: idempotencyKey.current,
     });
     setSaving(false);
@@ -137,8 +155,10 @@ export default function FastInboundPage() {
   function continueEntry() {
     const nextModel = keepModel ? normalizeModelNumber(modelNumber) : "";
     setModelNumber(nextModel);
-    setLines([makeLine()]);
+    const defaultSize = sizes.find((size) => size.normalized_name === "ONE_SIZE")?.id ?? sizes[0]?.id ?? "";
+    setLines([makeLine("", defaultSize)]);
     setNotes("");
+    setSupplierReference("");
     setSuccess(null);
     setMessage("");
     setColorSearch("");
@@ -159,17 +179,20 @@ export default function FastInboundPage() {
   </section></main>;
 
   return <main className="page">
-    <PageHead eyebrow="FAST INBOUND" title="服装快速入库" subtitle={`${new Intl.DateTimeFormat("zh-CN", { dateStyle: "long" }).format(new Date())} · 一个款号可一次录入多种颜色`} action={<Link className="button" href="/"><Home size={15}/>切换端口</Link>}/>
+    <PageHead eyebrow="FAST INBOUND" title="服装快速入库" subtitle={`${new Intl.DateTimeFormat("zh-CN", { dateStyle: "long" }).format(new Date())} · 一个款号可一次录入多种颜色和尺码`} action={<Link className="button" href="/"><Home size={15}/>切换端口</Link>}/>
     {message && <div className="notice warning">{message}</div>}
 
     <section className="form-card fast-model-card">
       <div className="field"><label>款号 *</label><input ref={modelInput} value={modelNumber} onChange={(event) => setModelNumber(event.target.value)} onBlur={(event) => setModelNumber(normalizeModelNumber(event.target.value))} placeholder="例如：DL30283" autoCapitalize="characters" maxLength={50}/><div className="field-help">这个款号只需填写一次，下面可以连续添加黑色、棕色、红色等多种颜色。</div></div>
       <div className="field"><label>入库仓库</label><select value={warehouseId} onChange={(event) => setWarehouseId(event.target.value)} disabled={loading}>{warehouses.map((warehouse) => <option key={warehouse.id} value={warehouse.id}>{warehouse.name}（{warehouse.code}）</option>)}</select></div>
+      <div className="field"><label>到货日期 *</label><input type="date" value={arrivalDate} onChange={(event) => setArrivalDate(event.target.value)} required/></div>
+      <div className="field"><label>供应商</label><select value={supplierId} onChange={(event) => setSupplierId(event.target.value)}><option value="">未指定</option>{suppliers.map((supplier) => <option key={supplier.id} value={supplier.id}>{supplier.name}</option>)}</select></div>
+      <div className="field"><label>供应商单号</label><input value={supplierReference} onChange={(event) => setSupplierReference(event.target.value)} placeholder="例如：SUP-20260801-01" maxLength={80}/></div>
       <div className="field"><label>备注（选填）</label><input value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="例如：早班到货" maxLength={500}/></div>
     </section>
 
     <section className="form-card">
-      <div className="panel-head" style={{ padding: 0, marginBottom: 14 }}><div><h2>颜色与数量</h2><p>同一款号需要几个颜色，就添加几行</p></div><span className="status success">{lines.length} 种颜色</span></div>
+      <div className="panel-head" style={{ padding: 0, marginBottom: 14 }}><div><h2>颜色、尺码与数量</h2><p>同一款号的每个颜色和尺码组合单独一行</p></div><span className="status success">{lines.length} 行 SKU</span></div>
       <div className="form-actions" style={{ margin: "0 0 14px", justifyContent: "space-between" }}>
         <div className="field" style={{ flex: "1 1 220px", margin: 0 }}><label>搜索颜色</label><input value={colorSearch} onChange={(event) => setColorSearch(event.target.value)} placeholder="输入：牛仔蓝、咖啡、绿色…"/></div>
         <button type="button" className="button" onClick={() => setShowNewColor((value) => !value)}>{showNewColor ? <X size={15}/> : <Palette size={15}/>} {showNewColor ? "取消新增" : "没有这个颜色？新增"}</button>
@@ -184,13 +207,14 @@ export default function FastInboundPage() {
         return <div className="fast-color-row" key={line.key}>
           <span className="fast-color-index">{index + 1}</span>
           <div className="field"><label>颜色 *</label><select value={line.colorId} onChange={(event) => updateLine(line.key, "colorId", event.target.value)}><option value="">选择颜色</option>{options.map((color) => <option key={color.id} value={color.id}>{getColorDisplayName(color)} · {color.code}</option>)}</select></div>
+          <div className="field"><label>尺码 *</label><select value={line.sizeId} onChange={(event) => updateLine(line.key, "sizeId", event.target.value)}><option value="">选择尺码</option>{sizes.map((size) => <option key={size.id} value={size.id}>{size.name}</option>)}</select></div>
           <div className="field"><label>数量 *</label><input type="number" inputMode="numeric" min="1" max="99999" value={line.quantity} onChange={(event) => updateLine(line.key, "quantity", event.target.value)} placeholder="18"/></div>
-          <div className="fast-sku-preview"><span>SKU 预览</span><strong>{normalizeModelNumber(modelNumber) || "款号"}{selected?.code ? `-${selected.code}` : "-颜色"}</strong></div>
+          <div className="fast-sku-preview"><span>SKU 预览</span><strong>{normalizeModelNumber(modelNumber) || "款号"}{selected?.code ? `-${selected.code}` : "-颜色"}-{sizes.find((size) => size.id === line.sizeId)?.normalized_name ?? "尺码"}</strong></div>
           <button type="button" className="icon-btn danger-icon" aria-label={`删除第${index + 1}种颜色`} disabled={lines.length === 1} onClick={() => setLines((current) => current.filter((item) => item.key !== line.key))}><Trash2 size={16}/></button>
         </div>;
       })}</div>
 
-      <div className="form-actions" style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}><div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}><button type="button" className="button" onClick={() => addLine()}><Plus size={15}/>添加另一种颜色</button><span className="muted" style={{ fontSize: 11 }}>重复颜色会自动合并数量</span></div><div style={{ textAlign: "right" }}><p className="muted" style={{ fontSize: 11, marginBottom: 7 }}>{summary.items.length} 个款色 · 共 {summary.total} 件</p><button type="button" className="button primary" disabled={loading || saving || Boolean(summary.error)} onClick={() => void confirm()}>{saving && <LoaderCircle size={15}/>}确认入库</button></div></div>
+      <div className="form-actions" style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}><div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}><button type="button" className="button" onClick={() => addLine()}><Plus size={15}/>添加颜色或尺码</button><span className="muted" style={{ fontSize: 11 }}>重复款色尺码会自动合并数量</span></div><div style={{ textAlign: "right" }}><p className="muted" style={{ fontSize: 11, marginBottom: 7 }}>{summary.items.length} 个 SKU · 共 {summary.total} 件</p><button type="button" className="button primary" disabled={loading || saving || Boolean(summary.error)} onClick={() => void confirm()}>{saving && <LoaderCircle size={15}/>}确认入库</button></div></div>
       <label className="muted" style={{ display: "inline-flex", gap: 7, alignItems: "center", fontSize: 11, marginTop: 12 }}><input type="checkbox" checked={keepModel} onChange={(event) => setKeepModel(event.target.checked)}/> 完成后继续保留这个款号</label>
       {summary.error && <div className="notice warning">{summary.error}</div>}
     </section>

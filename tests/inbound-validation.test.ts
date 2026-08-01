@@ -24,3 +24,15 @@ test("rejects invalid quantities and unsafe model numbers", () => {
   assert.throws(() => mergeInboundRows([{ key: "1", modelNumber: "?!", colorId: "black", quantity: "1" }]));
   assert.throws(() => mergeInboundRows([{ key: "1", modelNumber: "DL30283", colorId: "black", quantity: "0" }]));
 });
+
+test("keeps the same color in separate SKU rows when sizes differ", () => {
+  const rows = [
+    { key: "1", modelNumber: "DL30283", colorId: "black", sizeId: "size-s", quantity: "8" },
+    { key: "2", modelNumber: "DL30283", colorId: "black", sizeId: "size-m", quantity: "10" },
+    { key: "3", modelNumber: "DL30283", colorId: "black", sizeId: "size-s", quantity: "2" },
+  ];
+  assert.deepEqual(mergeInboundRows(rows), [
+    { model_number: "DL30283", color_id: "black", size_id: "size-s", quantity: 10 },
+    { model_number: "DL30283", color_id: "black", size_id: "size-m", quantity: 10 },
+  ]);
+});

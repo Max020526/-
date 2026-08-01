@@ -41,6 +41,7 @@ next-env.d.ts
 /.wrangler/
 /outputs/
 /work/
+/tmp/
 *.tsbuildinfo
 
 # Standalone customer storefront is maintained as its own repository.

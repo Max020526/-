@@ -141,7 +141,7 @@ export default function NewReceipt() {
         supplier_id: supplierId || null,
         warehouse_id: warehouseId,
         source_type: sourceType,
-        status: items.some((item) => item.duplicateKey) ? "PENDING_REVIEW" : "RECEIVING",
+        status: "DRAFT",
         notes: receiptNotes,
       },
       p_raw_lines: rawLines,
@@ -192,7 +192,7 @@ export default function NewReceipt() {
       <div className="panel-body"><div className="parse-summary"><div className="mini-stat"><span>款号</span><b>{summary.styles}</b></div><div className="mini-stat"><span>SKU</span><b>{summary.skus}</b></div><div className="mini-stat"><span>总件数</span><b>{summary.total}</b></div><div className="mini-stat"><span>错误</span><b>{summary.errors}</b></div><div className="mini-stat"><span>重复</span><b>{summary.duplicates}</b></div></div>
         {summary.duplicates > 0 && <div className="notice warning">发现同款同色同码重复记录。系统不会静默合并，请点击“合并重复项”或保留并继续人工确认。</div>}
         <div className="table-wrap"><table className="data-table"><thead><tr><th>行</th><th>款号</th><th>颜色</th><th>尺码</th><th>数量</th><th>状态</th><th>提示</th></tr></thead><tbody>{items.map((item, index) => <tr key={`${item.lineNumber}-${index}`}><td>{item.lineNumber}</td><td><input className="table-input" value={item.normalizedStyleNo} onChange={(event) => update(index, "normalizedStyleNo", event.target.value)}/></td><td><input className="table-input" value={item.normalizedColor} onChange={(event) => update(index, "normalizedColor", event.target.value)}/></td><td><input className="table-input" value={item.normalizedSize} onChange={(event) => update(index, "normalizedSize", event.target.value)}/></td><td><input className="table-input" style={{ width: 80 }} type="number" min="1" value={item.quantity ?? ""} onChange={(event) => update(index, "quantity", Number(event.target.value))}/></td><td><StatusBadge value={item.status}/></td><td className="muted">{item.error ?? "—"}</td></tr>)}</tbody></table></div>
-      </div><div className="form-actions" style={{ padding: "0 18px 18px" }}>{message && <span style={{ color: message.startsWith("已读取") ? "var(--success)" : "var(--danger)", fontSize: 12, marginRight: "auto" }}>{message}</span>}<button className="button primary" disabled={saving} onClick={save}>{saving ? <LoaderCircle className="animate-spin" size={16}/> : null}{saving ? "保存中…" : "保存并继续核对"}</button></div>
+      </div><div className="form-actions" style={{ padding: "0 18px 18px" }}>{message && <span style={{ color: message.startsWith("已读取") ? "var(--success)" : "var(--danger)", fontSize: 12, marginRight: "auto" }}>{message}</span>}<button className="button primary" disabled={saving} onClick={save}>{saving ? <LoaderCircle className="animate-spin" size={16}/> : null}{saving ? "保存中…" : "保存草稿并检查"}</button></div>
     </section>}
   </main>;
 }

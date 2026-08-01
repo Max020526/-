@@ -1,179 +1,169 @@
-# NEXORA 批发零售一体化系统 V1.0
+# NEXORA Fashion Commerce Platform V1.0
 
-NEXORA 将供应商货单、仓库收货、商品资料、网店上架、顾客订单与库存流水连接在同一个 Supabase 数据库中。第一原则是库存准确，其次是数据可追踪与移动端易用。
+NEXORA 是一个统一数据库、多个职责工作区的服装商业管理平台。本仓库当前交付的是 V1.0 第一阶段：项目基础、Supabase 数据基础、正式 RBAC、入库端 MVP，以及商品、SKU、库存和媒体的基础结构。
 
-## 当前交付范围
+正式开发基线是 `NEXORA_Fashion_Commerce_Platform_System_Specification_V1.0`、核心 ER 图和三条业务流程图。当前阶段不交付完整商城、完整订单履约、完整财务中心或高级分析；现有相关路由只保留明确边界，不能当作本阶段验收完成项。
 
-### 已完成
+## 第一阶段已完成
 
-- 四个前端产品共用一套 Supabase 业务模型：`/warehouse` 仓库与门店作业、`/admin` 内部经营管理、独立零售顾客网站，以及 V1.0 可选的批发客户门户。
-- 简体中文响应式界面，适配电脑、平板和手机。
-- 文字货单解析：款号标准化、颜色字典、均码、紧凑尺码、缺失数量、重复 SKU 提示及显式合并。
-- 入库流程：创建入库单、解析检查、实收差异核对、事务确认入库、库存流水。
-- 新旧商品处理：新款、新颜色/尺码、旧 SKU 补货均在数据库事务中匹配。
-- 商品中心：待完善列表、商品资料、SKU/库存、图片上传、价格、描述、网店设置。
-- 上架硬校验：名称、分类、价格、主图、详情图、描述、Slug、启用 SKU 与网店可售库存。
-- 独立零售顾客网站：已上架商品列表、详情、颜色尺码选择、实时可售库存、购物车、服务器计价结算、订单列表与订单详情。内部项目中的旧 `/shop/*` 地址只负责跳转，不再维护第二套商城页面。
-- 结构化货单：支持 `.xlsx`、`.csv` 标准列导入、格式校验、重复 SKU 提示，以及手动逐行录入。
-- 拍照识别：支持手机后置摄像头和多图上传，在设备端完成图像增强、旋转纠正、条码及中/英/意文字识别，并提取款号、颜色、尺码、数量、品牌、商品名称和材质；原图保存到私有入库附件。
-- 可安装 APP：提供 PWA 清单、安卓安装提示、iPhone 添加到主屏幕指引、品牌图标、独立窗口、应用快捷入口和安全的断网提示页。
-- 订单运营：支持付款、拣货、打包、发货/自取、完成、取消与退款状态流转；库存占用和扣减由数据库事务处理。
-- 网店库存：商品管理员可按仓库和 SKU 设置网店可售上限，所有修改写入审计日志。
-- 订单数据库函数：幂等创建、库存占用、取消释放、发货扣减与销售流水。
-- Supabase Auth、角色表、全表 RLS、Storage 权限、审计日志与显式 Data API grants。
-- 自动化测试：核心解析场景和主要页面服务端渲染。
-- 服装快速入库：员工只填款号、颜色、数量，数据库事务自动创建商品、SKU、库存、入库单、流水和日志。
-- 同款多颜色入库：款号只填写一次，可连续添加任意多种颜色；缺少颜色时可通过受控操作现场新增，系统会自动生成稳定的 SKU 颜色代码。
-- 产品职责分离：仓库与门店 PWA 承载 P01 入库、P04 履约、P08 POS；内部管理端承载 P02 商品、P03 订单客服、P05 采购、P06 财务、P07 老板经营、P09 系统管理；电脑和手机均可返回主页切换产品。
-- 统一入库台账：快速入库与 OCR/货单入库保留为两种操作模式，但共用一个记录查询、今日统计、CSV 导出和库存流水口径。
-- 批量入库：支持多行粘贴、键盘录入、重复合并、整批校验和原子提交。
-- 两级内部角色：`employee` 与 `admin`，页面、服务端接口和 RLS 同时鉴权。
-- 今日入库与取消：管理员取消会生成反向库存流水，不删除历史记录。
-- 基础资料管理：颜色、分类、供应商、员工账号和审计日志。
-- 报表导出：商品、库存、指定日期入库可导出 Excel 兼容的 UTF-8 BOM CSV。
+- Next.js App Router、TypeScript 严格模式、Tailwind CSS、响应式后台和 PWA 基础。
+- 登录、会话刷新、受保护路由、403、404、全局加载和错误状态。
+- 正式岗位：Owner、System Admin、Warehouse Manager、Warehouse Staff、Product Operator、Order & CS、Buyer、Finance、Cashier。
+- 页面访问、服务端接口、PostgreSQL Function、RLS 和 Storage 的分层授权。
+- `organizations` 组织隔离，以及组织级限制性 RLS 策略。
+- SPU 商品主档与颜色/尺码 SKU 变体，型号不能替代 SKU。
+- 标准到货单：Warehouse Staff 创建草稿、录入或识别货单、点货并提交；Warehouse Manager 审核后过账。
+- 经理快速过账：供应商、供应商单号、到货日期、型号、多颜色、多尺码和数量；仅用于已经线下核对完成的货物。
+- 正式入库状态：`draft → counting → ready_to_post → posted / cancelled`。
+- 原子过账 RPC：创建或匹配商品与 SKU、锁定库存、更新余额、写不可变流水与审计日志。
+- 幂等键防止重复过账；普通客户端不能直接写库存余额、库存流水或审计日志。
+- Canonical 只读契约：`locations`、`inventory_balances`、`product_media`、`inbound_receipts`、`inbound_receipt_lines`。
+- 私有商品媒体 Bucket、10MB 限制、JPG/PNG/WEBP、组织路径、短期签名预览、排序和删除。
+- 商品列表、商品基础编辑、SKU/库存查询、图片管理和发布前校验基础。
+- UTF-8 BOM CSV 导出、参考颜色/尺码/分类 Seed、自动化契约测试。
 
-### 后续外部集成（不属于本阶段）
+详细范围与基线差异见 [V1 第一阶段基线审查](docs/V1_PHASE1_BASELINE_REVIEW.md)，验收映射见 [A01–A16 验收矩阵](docs/A01_A16_ACCEPTANCE.md)。
 
-- 连续扫码设备接入与离线待办同步（库存写入仍必须联网，避免设备间库存冲突）。
-- 在线支付网关对接（当前支持订单创建与后台人工确认付款）。
-- TikTok Shop、Shopify 与第三方物流真实 API。
-- P04 仓库履约、P05 采购管理、P06 财务对账、P08 门店 POS 的完整交易界面。
-- 多仓库调拨、条码标签打印和批发客户销售单。
-- 生产监控、支付渠道及真实设备的持续回归测试。
+## 工作区边界
+
+| 前端产品 | 入口 | 第一阶段职责 |
+| --- | --- | --- |
+| Warehouse & POS PWA | `/warehouse` | P01 入库与库存查询；P04/P08 仅预留边界 |
+| Internal Admin | `/admin` | 商品基础、库存监管、用户与基础资料；后续模块不计入第一阶段 |
+| Retail Storefront | 独立项目 | 本阶段不开发 |
+| B2B Portal | 未启用 | 可选后续阶段 |
+
+四个前端产品未来共享同一 Supabase 业务模型，不复制商品、SKU、库存或订单主数据。
 
 ## 本地运行
 
-需要 Node.js 22.13 或更高版本。
+要求 Node.js 22.13 或更高版本。
 
-```bash
+```powershell
 npm install
-copy .env.example .env.local
-npm run dev
+Copy-Item .env.example .env.local
+npm run dev:netlify
 ```
 
-打开终端输出的本地地址。未配置 Supabase 时，系统只显示安全的空状态，不会注入模拟业务数据。
+打开 `http://localhost:3000`。未配置 Supabase 时，应用只显示配置提示和安全空状态，不生成模拟业务数据。
 
-## 环境变量
-
-在 Supabase 项目的 Connect 对话框中获取项目 URL 和 Publishable Key：
+### 环境变量
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT_REF.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=sb_publishable_REPLACE_ME
-NEXT_PUBLIC_SITE_URL=https://YOUR_DEPLOYED_DOMAIN
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+SUPABASE_SECRET_KEY=sb_secret_REPLACE_ME
 ```
 
-浏览器端仅使用 Publishable Key。不要将 Secret Key 或旧版 `service_role` Key 放进任何 `NEXT_PUBLIC_` 变量。
+- 浏览器和普通服务端会话仅使用 Publishable Key，并受 RLS 约束。
+- `SUPABASE_SECRET_KEY` 只供受保护的员工账号管理 API 使用，绝不能添加 `NEXT_PUBLIC_` 前缀。
+- 不要提交 `.env.local`、Secret Key、旧 `service_role` Key 或测试密码。
 
-服务端 Supabase 客户端已经拆分为三个明确边界：
+## Supabase 初始化
 
-- `lib/supabase/client.ts`：浏览器会话，只能使用 Publishable Key。
-- `lib/supabase/server.ts`：服务端用户会话，使用 Cookie 并继续受 RLS 限制。
-- `lib/supabase/admin.ts`：仅限后续员工管理等受保护的服务端代码，读取 `SUPABASE_SECRET_KEY`。
+建议先创建独立开发项目或开发分支，不要直接在生产数据库试跑迁移。
 
-`SUPABASE_SECRET_KEY` 仅供受保护的员工账号管理接口使用；不使用该功能时可以不配置。任何真实密钥都只能保存在 `.env.local`、Netlify 环境变量或 Sites 环境变量中，不能提交到 Git。
-
-## 数据库初始化
-
-1. 创建 Supabase 项目。
-2. 安装 Supabase CLI 并登录。
-3. 将本地项目连接到远程项目。
-4. 推送迁移和参考数据。
-
-```bash
+```powershell
 npx supabase login
 npx supabase link --project-ref YOUR_PROJECT_REF
 npx supabase db push
 npx supabase db seed
 ```
 
-主迁移位于 `supabase/migrations/`，其中包含核心表、约束、RLS、Storage 策略和事务函数。`supabase/seed.sql` 只写入分类等参考数据，不包含模拟商品、库存或订单。
+迁移按文件名顺序执行。最后三份第一阶段正式对齐迁移是：
 
-### 创建首个管理员与测试账号
+- `20260801160000_v1_phase1_baseline_alignment.sql`
+- `20260801161000_post_size_aware_inbound_receipt.sql`
+- `20260801162000_harden_inbound_cancellation.sql`
 
-先通过 Supabase Auth 创建用户，再在 SQL Editor 中执行以下语句。把邮箱替换为实际 Owner 邮箱：
+迁移显式配置 Data API `GRANT` 与 RLS。Supabase 2026 年的新默认设置不再自动暴露新表，因此不要省略 GRANT。
+
+### 创建首个 Owner
+
+1. 在 Supabase Auth 创建 Owner 用户。
+2. 执行以下 SQL，将邮箱替换为真实 Owner 邮箱：
 
 ```sql
+update public.profiles profile
+set role = 'owner', is_active = true
+from auth.users auth_user
+where profile.id = auth_user.id
+  and auth_user.email = 'owner@example.com';
+
 insert into public.user_roles (user_id, role_id)
-select u.id, r.id
-from auth.users u cross join public.roles r
-where u.email = 'owner@example.com' and r.name = 'OWNER'
+select auth_user.id, role.id
+from auth.users auth_user
+join public.profiles profile on profile.id = auth_user.id
+join public.roles role
+  on role.organization_id = profile.organization_id
+ and role.code = 'owner'
+where auth_user.email = 'owner@example.com'
 on conflict do nothing;
 ```
 
-同时把该账号映射到新的两级角色：
+3. 登录后在 `/settings/users` 创建其他内部账号并分配最小岗位权限。
+4. 临时密码应通过安全渠道交付，首次登录后立即修改。
 
-```sql
-update public.profiles p
-set role = 'admin', is_active = true
-from auth.users u
-where p.id = u.id and u.email = 'owner@example.com';
-```
+### 必做的控制台安全设置
 
-首次登录后，管理员可在 `/settings/users` 创建 `employee` 测试账号、设置临时密码并随时停用。请勿在 README、Issue 或聊天记录中保存真实密码。
+- Auth → Password Security：开启泄露密码检测。
+- 生产环境建议为 Owner/System Admin 开启 MFA。
+- Site URL 与 Redirect URLs 只保留受信任的本地和 Netlify 域名。
+- Storage 的 `product-images` Bucket 应为 Private；不要改回 Public。
 
-## 关键库存规则
+## 核心数据一致性规则
 
-- `products.style_no` 全局唯一。
-- `(product_id, color_id, size_id)` 唯一，SKU 不会重复。
-- `inventory.quantity_on_hand` 与 `quantity_reserved` 均不能为负，占用量不能大于实际库存。
-- 快速入库只能通过 `confirm_inbound_order()`；OCR/货单入库只能通过 `confirm_stock_receipt()`。两种模式都使用数据库事务，重复确认会被拒绝。
-- 订单通过 `create_online_order()` 原子占用库存；价格从已上架记录读取，不信任客户端价格。
-- 取消或发货通过 `transition_order_inventory()`，分别释放占用或同时扣减实际库存和占用库存。
-- 所有正式库存变化都写入 `inventory_movements`，重要操作写入 `audit_logs`。
+- 商品型号在组织内唯一；SKU 由型号、颜色和尺码构成并全局唯一。
+- 库存余额查询使用 `inventory_balances`；库存事实来自不可变 `inventory_movements`。
+- 可售库存 = `on_hand - reserved - safety_stock`，结果不小于零。
+- 所有库存变化必须通过受控 RPC，余额和流水在同一事务更新。
+- 过账请求必须提供幂等键；重复请求返回原结果，不重复增加库存。
+- 已过账流水不能修改或删除；修正使用反向流水或调整流水。
+- `audit_logs` 对普通应用角色只读，写入只能由受控函数完成。
+- 商品图片使用 `<organization-id>/products/<product-id>/...` 路径和短期签名 URL。
 
-## 测试与构建
+## 质量检查
 
-```bash
+```powershell
 npm run lint
 npm run typecheck
-npm run build
-npm run build:netlify
 npm test
+npm run build:netlify
 ```
 
-上线前还应在已连接的 Supabase 项目运行数据库 Advisors，并完成角色权限、两次点击幂等、并发下单、取消释放与发货扣减测试。
+`npm test` 包含构建、页面渲染、解析器、RBAC、迁移契约、库存事务、幂等性和媒体安全检查。数据库行为测试应在独立 Supabase 开发分支执行，不能使用真实生产业务数据。
 
-## 安全与性能基线
+## Netlify 部署准备
 
-- 内部页面统一通过会话代理校验，管理操作同时受服务端身份检查与 Supabase RLS 保护。
-- 管理员账号写接口要求同源 JSON 请求、限制请求体大小，并阻止当前管理员停用或移除自己的管理员角色。
-- Next.js/Netlify 与 Sites Worker 两条部署链路均发送 CSP、HSTS、点击劫持、MIME 嗅探和浏览器权限安全头。
-- 共用数据查询 Hook 会取消过期响应，内联空数组不会触发重复请求循环。
-- 商品和 OCR 图片限制格式、文件大小与解码像素数，避免超大图片耗尽设备内存。
-- 管理员创建的临时密码要求 12 至 128 位；建议在 Supabase Auth 控制台启用泄露密码检测和 MFA。
+仓库已提供 `netlify.toml`，构建命令为 `npm run build:netlify`。在 Netlify 环境变量中配置上述变量，并将 `NEXT_PUBLIC_SITE_URL` 设置为最终 HTTPS 域名。
 
-本轮审计记录见 `docs/SECURITY_PERFORMANCE_AUDIT_2026-08-01.md`，端口与流程规划见 `docs/PORT_AND_FLOW_PLAN_V1.0.md`。
+本次交付没有执行生产部署、没有创建收费资源，也没有把本地迁移写入生产数据库。上线前必须：
 
-## Netlify 部署
-
-仓库已提供 `netlify.toml`。将 Git 仓库连接到 Netlify 后，平台会执行 `npm run build:netlify` 并发布 Next.js 输出。请在 Netlify 项目设置中添加：
-
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
-- `NEXT_PUBLIC_SITE_URL`
-- 后续确实需要员工管理接口时再添加 `SUPABASE_SECRET_KEY`
-
-Netlify 不依赖提交的 `.env.local`；环境变量应通过 Netlify 控制台保存。当前仓库仍保留原有 Sites/Vinext 构建：`npm run build` 用于现有 Sites，`npm run build:netlify` 用于 Netlify，两者互不覆盖。
-
-## PWA 与其他部署
-
-应用可部署到 OpenAI Sites、Vercel 或兼容 Cloudflare Worker 的平台。部署环境需要配置上述两个公开 Supabase 变量。Supabase Storage 使用公开读取、员工角色写入的 `product-images` Bucket；商品二进制不会写入数据库。
-
-部署到 HTTPS 域名后，安卓浏览器会显示“安装 NEXORA APP”；iPhone 可通过 Safari 的“分享 → 添加到主屏幕”安装。已安装版本以独立窗口启动，并提供拍照入库、管理中心和商店快捷入口。
+1. 在开发 Supabase 项目完整执行迁移和 Seed。
+2. 执行 A01–A16 第一阶段适用项。
+3. 重新运行 Security Advisor 与 Performance Advisor。
+4. 使用 Warehouse Staff、Warehouse Manager、Product Operator、System Admin 四类账号做越权测试。
+5. 完成备份和回滚演练后，才可安排生产变更窗口。
 
 ## 项目结构
 
 ```text
-app/                 四个前端产品的页面与业务流程
-components/          共用布局和界面组件
-hooks/               Supabase 数据读取 hooks
-lib/parser/          货单解析与标准化
-lib/supabase/        浏览器、服务端与管理员 Supabase 客户端
-supabase/migrations/ 数据库版本迁移
-supabase/seed.sql    参考数据
-tests/               解析与页面测试
-docs/                分阶段实施计划与阶段交付说明
+app/                    App Router 页面、受保护布局与服务端 API
+components/             共享 UI、入库、商品和库存组件
+hooks/                  可取消的 Supabase 查询 Hook
+lib/auth/               正式角色、路由授权与兼容映射
+lib/supabase/           浏览器、服务端和受控管理员客户端
+lib/validation/         集中表单校验和标准化
+supabase/migrations/    可重复执行的数据库迁移、RLS、RPC 与 Storage Policy
+supabase/seed.sql       仅参考数据，不含模拟业务记录
+tests/                  页面、TypeScript 逻辑和数据库契约测试
+docs/                   基线审查、端口规划、验收与部署说明
 ```
 
-完整增量实施顺序见 `docs/IMPLEMENTATION_PLAN.md`。14 个阶段均已完成，逐阶段验收记录位于 `docs/PHASE_1.md` 至 `docs/PHASE_14.md`。
+## 当前限制
+
+- 旧版表名仍保留以支持无损升级；新代码应使用 Canonical 视图/RPC。物理表重命名应在独立维护窗口完成，不应与业务上线同时进行。
+- 第一阶段没有完整商城、支付、订单履约、财务、POS、采购单、退货退款、批发客户或第三方渠道同步。
+- 当前自动化数据库测试以迁移契约为主；上线前仍需在 Supabase 开发分支执行真实 RLS/RPC 并发测试。
+- 泄露密码检测是 Supabase 控制台项目设置，代码不能替用户安全地开启。

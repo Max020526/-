@@ -2,12 +2,14 @@ export type InboundDraftRow = {
   key: string;
   modelNumber: string;
   colorId: string;
+  sizeId?: string;
   quantity: string;
 };
 
 export type ConfirmInboundItem = {
   model_number: string;
   color_id: string;
+  size_id?: string;
   quantity: number;
 };
 
@@ -30,14 +32,19 @@ export function mergeInboundRows(rows: InboundDraftRow[]): ConfirmInboundItem[] 
     const error = validateInboundRow(row);
     if (error) throw new Error(error);
     const model_number = normalizeModelNumber(row.modelNumber);
-    const key = `${model_number}:${row.colorId}`;
+    const key = `${model_number}:${row.colorId}:${row.sizeId ?? "ONE_SIZE"}`;
     const existing = merged.get(key);
     const quantity = Number(row.quantity);
     if (existing) existing.quantity += quantity;
-    else merged.set(key, { model_number, color_id: row.colorId, quantity });
+    else merged.set(key, {
+      model_number,
+      color_id: row.colorId,
+      ...(row.sizeId ? { size_id: row.sizeId } : {}),
+      quantity,
+    });
   }
   for (const item of merged.values()) {
-    if (item.quantity > 99999) throw new Error("相同款号和颜色合并后的数量不能超过99999");
+    if (item.quantity > 99999) throw new Error("相同款号、颜色和尺码合并后的数量不能超过99999");
   }
   return [...merged.values()];
 }

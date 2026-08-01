@@ -1,4 +1,14 @@
-export const USER_ROLES = ["employee", "admin"] as const;
+export const USER_ROLES = [
+  "owner",
+  "system_admin",
+  "warehouse_manager",
+  "warehouse_staff",
+  "product_operator",
+  "order_cs",
+  "buyer",
+  "finance",
+  "cashier",
+] as const;
 export type UserRole = (typeof USER_ROLES)[number];
 
 export const PRODUCT_STATUSES = [
@@ -10,7 +20,13 @@ export const PRODUCT_STATUSES = [
 ] as const;
 export type ProductStatus = (typeof PRODUCT_STATUSES)[number];
 
-export const INBOUND_STATUSES = ["draft", "confirmed", "cancelled"] as const;
+export const INBOUND_STATUSES = [
+  "draft",
+  "counting",
+  "ready_to_post",
+  "posted",
+  "cancelled",
+] as const;
 export type InboundStatus = (typeof INBOUND_STATUSES)[number];
 
 export const INVENTORY_MOVEMENT_TYPES = [

@@ -1,4 +1,4 @@
 import { AppShell } from "@/components/shared/app-shell";
 import { AccessGate } from "@/components/shared/access-gate";
-const ROLES = ["admin"] as const;
-export default function AdminLayout({children}:{children:React.ReactNode}) { return <AccessGate roles={ROLES}><AppShell portal="admin" title="管理端">{children}</AppShell></AccessGate>; }
+import { ADMIN_ROLES } from "@/lib/auth/roles";
+export default function AdminLayout({children}:{children:React.ReactNode}) { return <AccessGate roles={ADMIN_ROLES}><AppShell portal="admin" title="内部管理端">{children}</AppShell></AccessGate>; }

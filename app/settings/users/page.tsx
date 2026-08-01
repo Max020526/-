@@ -4,6 +4,7 @@ import { FormEvent, useCallback, useEffect, useState } from "react";
 import { LoaderCircle, Plus, RefreshCw, Save } from "lucide-react";
 import { PageHead } from "@/components/shared/page-head";
 import { EmptyState } from "@/components/shared/empty-state";
+import { INTERNAL_ROLES, ROLE_LABELS } from "@/lib/auth/roles";
 
 type Staff = {
   id: string;
@@ -21,7 +22,7 @@ export default function UsersPage() {
     full_name: "",
     email: "",
     password: "",
-    role: "employee",
+    role: "warehouse_staff",
   });
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -56,7 +57,7 @@ export default function UsersPage() {
       setMessage(body.error ?? "创建失败。");
       return;
     }
-    setForm({ full_name: "", email: "", password: "", role: "employee" });
+    setForm({ full_name: "", email: "", password: "", role: "warehouse_staff" });
     setMessage("员工账号创建成功，请安全地把临时密码交给员工。");
     await load();
   }
@@ -80,7 +81,7 @@ export default function UsersPage() {
       <PageHead
         eyebrow="STAFF ACCESS"
         title="员工管理"
-        subtitle="创建内部账号、分配员工或管理员角色，并停用离职账号。"
+        subtitle="按正式岗位分配最小权限；停用账号后将立即失去内部工作区访问权。"
         action={
           <button className="button" onClick={() => void load()}>
             <RefreshCw size={15} />
@@ -141,8 +142,7 @@ export default function UsersPage() {
                   setForm({ ...form, role: event.target.value })
                 }
               >
-                <option value="employee">员工</option>
-                <option value="admin">管理员</option>
+                {INTERNAL_ROLES.map((role) => <option key={role} value={role}>{ROLE_LABELS[role]}</option>)}
               </select>
             </div>
           </div>
@@ -206,7 +206,7 @@ export default function UsersPage() {
                       </td>
                       <td>
                         <select
-                          value={user.role ?? "employee"}
+                          value={user.role === "employee" ? "warehouse_staff" : user.role === "admin" ? "system_admin" : user.role ?? "warehouse_staff"}
                           onChange={(event) =>
                             setUsers((items) =>
                               items.map((item, i) =>
@@ -217,8 +217,7 @@ export default function UsersPage() {
                             )
                           }
                         >
-                          <option value="employee">员工</option>
-                          <option value="admin">管理员</option>
+                          {INTERNAL_ROLES.map((role) => <option key={role} value={role}>{ROLE_LABELS[role]}</option>)}
                         </select>
                       </td>
                       <td>

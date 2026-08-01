@@ -31,10 +31,9 @@ const nav = {
   warehouse: [
     { section: "P01 · 入库作业", links: [
       { href: "/warehouse", label: "作业首页", icon: Home },
-      { href: "/inbound/new", label: "快速入库", icon: PlusCircle },
-      { href: "/inbound/batch", label: "批量入库", icon: ClipboardList },
-      { href: "/warehouse/receipts/new", label: "OCR / 货单入库", icon: PackageCheck },
+      { href: "/warehouse/receipts/new", label: "新建到货单", icon: PackageCheck },
       { href: "/warehouse/receipts", label: "统一入库记录", icon: ClipboardCheck },
+      { href: "/inbound/new", label: "经理快速过账", icon: PlusCircle },
     ] },
     { section: "仓库与门店", links: [
       { href: "/warehouse/inventory", label: "库存查询与盘点", icon: Boxes },
@@ -86,7 +85,7 @@ export function AppShell({ portal, title, children }: { portal: Portal; title: s
   const mobileLinks = portal === "warehouse"
     ? [
       { href: "/warehouse", label: "首页", icon: Home },
-      { href: "/inbound/new", label: "快速入库", icon: PlusCircle },
+      { href: "/warehouse/receipts/new", label: "新建到货", icon: PlusCircle },
       { href: "/warehouse/receipts", label: "入库记录", icon: ClipboardList },
       { href: "/warehouse/inventory", label: "库存", icon: Boxes },
       { href: "/", label: "切换产品", icon: Menu },
