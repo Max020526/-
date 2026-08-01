@@ -55,6 +55,14 @@ NEXT_PUBLIC_SITE_URL=https://YOUR_DEPLOYED_DOMAIN
 
 浏览器端仅使用 Publishable Key。不要将 Secret Key 或旧版 `service_role` Key 放进任何 `NEXT_PUBLIC_` 变量。
 
+服务端 Supabase 客户端已经拆分为三个明确边界：
+
+- `lib/supabase/client.ts`：浏览器会话，只能使用 Publishable Key。
+- `lib/supabase/server.ts`：服务端用户会话，使用 Cookie 并继续受 RLS 限制。
+- `lib/supabase/admin.ts`：仅限后续员工管理等受保护的服务端代码，读取 `SUPABASE_SECRET_KEY`。
+
+`SUPABASE_SECRET_KEY` 第一阶段可以不配置。任何真实密钥都只能保存在 `.env.local`、Netlify 环境变量或 Sites 环境变量中，不能提交到 Git。
+
 ## 数据库初始化
 
 1. 创建 Supabase 项目。
@@ -98,14 +106,27 @@ on conflict do nothing;
 ## 测试与构建
 
 ```bash
-npm test
 npm run lint
+npm run typecheck
 npm run build
+npm run build:netlify
+npm test
 ```
 
 上线前还应在已连接的 Supabase 项目运行数据库 Advisors，并完成角色权限、两次点击幂等、并发下单、取消释放与发货扣减测试。
 
-## 部署
+## Netlify 部署
+
+仓库已提供 `netlify.toml`。将 Git 仓库连接到 Netlify 后，平台会执行 `npm run build:netlify` 并发布 Next.js 输出。请在 Netlify 项目设置中添加：
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- `NEXT_PUBLIC_SITE_URL`
+- 后续确实需要员工管理接口时再添加 `SUPABASE_SECRET_KEY`
+
+Netlify 不依赖提交的 `.env.local`；环境变量应通过 Netlify 控制台保存。当前仓库仍保留原有 Sites/Vinext 构建：`npm run build` 用于现有 Sites，`npm run build:netlify` 用于 Netlify，两者互不覆盖。
+
+## PWA 与其他部署
 
 应用可部署到 OpenAI Sites、Vercel 或兼容 Cloudflare Worker 的平台。部署环境需要配置上述两个公开 Supabase 变量。Supabase Storage 使用公开读取、员工角色写入的 `product-images` Bucket；商品二进制不会写入数据库。
 
@@ -118,8 +139,11 @@ app/                 三端页面与业务流程
 components/          共用布局和界面组件
 hooks/               Supabase 数据读取 hooks
 lib/parser/          货单解析与标准化
-lib/supabase/        客户端初始化
+lib/supabase/        浏览器、服务端与管理员 Supabase 客户端
 supabase/migrations/ 数据库版本迁移
 supabase/seed.sql    参考数据
 tests/               解析与页面测试
+docs/                分阶段实施计划与阶段交付说明
 ```
+
+完整增量实施顺序见 `docs/IMPLEMENTATION_PLAN.md`。第1阶段说明见 `docs/PHASE_1.md`。
