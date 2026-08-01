@@ -55,7 +55,7 @@ export function ReturnsCenter({ returnId }: { returnId?: string }) {
       p_return_id: returnId, p_command: command, p_payload: payload,
       p_idempotency_key: commandKey(`return-${command}`), p_request_id: crypto.randomUUID(),
     });
-    if (commandError) setError(friendlyError(commandError, commandError.message)); else { setMessage("售后状态已更新。"); await load(); }
+    if (commandError) setError(friendlyError(commandError, "售后状态更新失败，请检查当前状态和权限。")); else { setMessage("售后状态已更新。"); await load(); }
     setWorking("");
   }
   async function postInspection() {
@@ -64,7 +64,7 @@ export function ReturnsCenter({ returnId }: { returnId?: string }) {
     setWorking("inspect"); setError(""); setMessage(""); const db = client as unknown as SupabaseClient;
     const payload = items.map((item) => ({ return_item_id: item.id, disposition: dispositions[item.id] || "restockable", condition: dispositions[item.id] === "restockable" ? "good" : "damaged" }));
     const { error: commandError } = await db.rpc("rpc_post_return", { p_return_id: returnId, p_dispositions: payload, p_idempotency_key: commandKey("post-return"), p_request_id: crypto.randomUUID() });
-    if (commandError) setError(friendlyError(commandError, commandError.message)); else { setMessage("质检结果和库存流水已原子保存。"); await load(); }
+    if (commandError) setError(friendlyError(commandError, "退货质检保存失败，库存未发生变化。")); else { setMessage("质检结果和库存流水已原子保存。"); await load(); }
     setWorking("");
   }
 

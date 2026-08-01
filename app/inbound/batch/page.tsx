@@ -5,6 +5,7 @@ import Link from "next/link";
 import { KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import { PageHead } from "@/components/shared/page-head";
 import { getColorDisplayName } from "@/lib/colors/display";
+import { friendlyError } from "@/lib/errors/friendly-error";
 import { getSupabase } from "@/lib/supabase/client";
 import { mergeInboundRows, normalizeModelNumber, parseBatchText, validateInboundRow, type InboundDraftRow } from "@/lib/validation/inbound";
 import type { Json } from "@/types/database";
@@ -72,7 +73,7 @@ export default function BatchInboundPage() {
       p_idempotency_key: crypto.randomUUID(),
     });
     setSaving(false);
-    if (error) { setMessage(error.message); return; }
+    if (error) { setMessage(friendlyError(error, "批量入库失败，库存未发生变化。")); return; }
     setSuccess(data as unknown as { inbound_number: string; total_quantity: number });
   }
 

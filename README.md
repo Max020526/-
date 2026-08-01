@@ -92,12 +92,14 @@ npm run dev:netlify
 ```powershell
 npm run lint
 npm run typecheck
+npm run verify:environment
 npm test
 npm run build:netlify
 
 cd customer-store
 npm run lint
 npm run typecheck
+npm run verify:environment
 npm test
 npm run build:netlify
 ```
@@ -106,7 +108,7 @@ npm run build:netlify
 
 ## Netlify 部署准备
 
-两个仓库均提供 `netlify.toml`，构建命令为 `npm run build:netlify`。部署前必须：
+两个仓库均提供 `netlify.toml`，构建命令会先运行 `npm run verify:environment`，再运行 `npm run build:netlify`。Preview/Branch Deploy 必须连接非生产 Supabase 项目。部署前必须：
 
 1. 备份数据库并演练回滚。
 2. 运行全部 migration、RLS/RPC 测试及 Supabase Security/Performance Advisors。
@@ -115,6 +117,12 @@ npm run build:netlify
 5. 获得明确的正式上线授权。
 
 本阶段没有执行 Netlify/Sites 正式部署，没有创建收费资源，也没有写入真实或演示业务数据。
+
+## 第六阶段：发布准备
+
+V1.0 已进入功能冻结和发布验收阶段。Phase 6 增加部署环境隔离门禁、关键 RPC 安全错误提示、审计与库存流水不可变迁移、A01–A16 证据矩阵、恢复/回滚手册、岗位手册、GDPR 基线和 Day 1/Week 1 运行清单。
+
+当前仅为 Conditional GO：允许进入独立预发布/UAT，不代表获准生产部署。生产硬门禁和已知限制见 `docs/final_release_readiness.md`。
 
 ## 当前限制
 

@@ -45,7 +45,7 @@ export function FinanceCenter() {
     const client = getSupabase(); if (!client) return; const db = client as unknown as SupabaseClient;
     setWorking(`${entityId ?? "new"}:${commandName}`); setError(""); setMessage("");
     const { error: commandError } = await db.rpc("rpc_finance_command", { p_entity_type: entityType, p_entity_id: entityId, p_command: commandName, p_payload: payload, p_idempotency_key: businessCommandKey(`finance-${entityType}-${commandName}`), p_request_id: crypto.randomUUID() });
-    if (commandError) setError(friendlyError(commandError, commandError.message)); else { setMessage("财务业务记录已更新，分录与审计同步完成。"); await load(); }
+    if (commandError) setError(friendlyError(commandError, "财务操作失败，请检查金额、状态和权限。")); else { setMessage("财务业务记录已更新，分录与审计同步完成。"); await load(); }
     setWorking("");
   }
 

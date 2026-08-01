@@ -115,7 +115,7 @@ export default function FastInboundPage() {
       p_hex_value: newColor.hex,
     });
     setCreatingColor(false);
-    if (error) { setMessage(error.message || "新增颜色失败，请重试。"); return; }
+    if (error) { setMessage(friendlyError(error, "新增颜色失败，请重试。")); return; }
     const created = data as unknown as Color & { existing?: boolean };
     if (!created?.id || !created.code) { setMessage("颜色已保存，但返回数据不完整，请刷新页面后选择。"); return; }
     try { await loadColors(); }
@@ -148,7 +148,7 @@ export default function FastInboundPage() {
       p_idempotency_key: idempotencyKey.current,
     });
     setSaving(false);
-    if (error) { setMessage(error.message.includes("duplicate") ? "该款号和颜色对应的 SKU 已经存在，请检查商品资料。" : error.message); return; }
+    if (error) { setMessage(friendlyError(error, "入库失败，库存未发生变化，请检查数据后重试。")); return; }
     setSuccess(data as unknown as Success);
   }
 

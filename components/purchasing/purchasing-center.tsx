@@ -61,7 +61,7 @@ export function PurchasingCenter() {
       p_purchase_order_id: orderId, p_command: commandName, p_payload: payload,
       p_idempotency_key: businessCommandKey(`purchase-${commandName}`), p_request_id: crypto.randomUUID(),
     });
-    if (commandError) setError(friendlyError(commandError, commandError.message)); else { setMessage("采购单已更新。"); await load(); }
+    if (commandError) setError(friendlyError(commandError, "采购单状态更新失败，请检查状态和权限。")); else { setMessage("采购单已更新。"); await load(); }
     setWorking(""); return !commandError;
   }
 
@@ -84,7 +84,7 @@ export function PurchasingCenter() {
     const client = getSupabase(); if (!client) return; const db = client as unknown as SupabaseClient;
     setWorking(`${order.id}:receive`); setError(""); setMessage("");
     const { error: receiveError } = await db.rpc("rpc_receive_purchase_order", { p_purchase_order_id: order.id, p_items: items, p_idempotency_key: businessCommandKey("purchase-receive"), p_request_id: crypto.randomUUID() });
-    if (receiveError) setError(friendlyError(receiveError, receiveError.message)); else { setMessage("采购收货已过账，库存、平均成本和流水已同步。"); await load(); }
+    if (receiveError) setError(friendlyError(receiveError, "采购收货失败，库存和成本未发生变化。")); else { setMessage("采购收货已过账，库存、平均成本和流水已同步。"); await load(); }
     setWorking("");
   }
 

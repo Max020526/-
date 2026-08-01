@@ -9,6 +9,7 @@ import { SetupBanner } from "@/components/shared/setup-banner";
 import { EmptyState } from "@/components/shared/empty-state";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
+import { friendlyError } from "@/lib/errors/friendly-error";
 import { getSupabase } from "@/lib/supabase/client";
 
 type ReceiptLine = {
@@ -51,7 +52,7 @@ export default function ParseReview() {
       p_receipt_id: id, p_target_status: "counting",
     });
     setSubmitting(false);
-    if (error) { setMessage(error.message); return; }
+    if (error) { setMessage(friendlyError(error, "提交点货失败，请稍后重试。")); return; }
     setWorkflowStatus("counting");
     router.push(`/warehouse/receipts/${id}/receive`);
   }

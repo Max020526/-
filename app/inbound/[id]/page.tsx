@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from "react";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PageHead } from "@/components/shared/page-head";
 import { StatusBadge } from "@/components/shared/status-badge";
+import { friendlyError } from "@/lib/errors/friendly-error";
 import { getSupabase } from "@/lib/supabase/client";
 
 type Detail = {
@@ -39,7 +40,7 @@ export default function InboundDetailPage() {
     const client = getSupabase(); if (!client) return;
     setWorking(true); setMessage("");
     const { error } = await client.rpc("cancel_inbound_order", { p_inbound_order_id: id, p_reason: reason.trim() });
-    setWorking(false); if (error) setMessage(error.message); else { setMessage("入库单已取消，反向库存流水已生成。"); await load(); }
+    setWorking(false); if (error) setMessage(friendlyError(error, "取消入库失败，库存未发生变化。")); else { setMessage("入库单已取消，反向库存流水已生成。"); await load(); }
   }
 
   if (!detail) return <main className="page"><EmptyState title={message || "正在加载入库单"} description="请稍候或返回今日入库列表。"/></main>;

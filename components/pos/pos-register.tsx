@@ -46,7 +46,7 @@ export function PosRegister() {
   async function sessionCommand(commandName: string, payload: Record<string, unknown>) {
     const client = getSupabase(); if (!client) return; const db = client as unknown as SupabaseClient; setWorking(commandName); setError(""); setMessage("");
     const { error: commandError } = await db.rpc("rpc_pos_session_command", { p_session_id: session?.id ?? null, p_command: commandName, p_payload: payload, p_idempotency_key: businessCommandKey(`pos-${commandName}`), p_request_id: crypto.randomUUID() });
-    if (commandError) setError(friendlyError(commandError, commandError.message)); else { setMessage(commandName === "close" ? "班次已关闭，现金差异已审计。" : "POS 班次已更新。"); await load(); }
+    if (commandError) setError(friendlyError(commandError, "POS 班次操作失败，请检查状态和权限。")); else { setMessage(commandName === "close" ? "班次已关闭，现金差异已审计。" : "POS 班次已更新。"); await load(); }
     setWorking("");
   }
 
@@ -56,7 +56,7 @@ export function PosRegister() {
     const client = getSupabase(); if (!client) return; const db = client as unknown as SupabaseClient; setWorking("sale"); setError(""); setMessage("");
     const payments = [...(cash > 0 ? [{ method: "cash", amount: cash }] : []), ...(card > 0 ? [{ method: "card", amount: card }] : [])];
     const { data, error: saleError } = await db.rpc("rpc_complete_pos_sale", { p_session_id: session.id, p_cart: cart.map((line) => ({ variant_id: line.variant_id, quantity: line.quantity, discount_amount: line.discount_amount })), p_payments: payments, p_idempotency_key: businessCommandKey("pos-sale"), p_request_id: crypto.randomUUID() });
-    if (saleError) setError(friendlyError(saleError, saleError.message)); else { const result = data as { order_no?: string }; setMessage(`销售完成：${result.order_no ?? "POS 订单"}。小票数据、付款、库存与财务分录已保存。`); setCart([]); setCashAmount(0); await Promise.all([load(), loadCatalog()]); }
+    if (saleError) setError(friendlyError(saleError, "POS 销售失败，订单和库存未发生变化。")); else { const result = data as { order_no?: string }; setMessage(`销售完成：${result.order_no ?? "POS 订单"}。小票数据、付款、库存与财务分录已保存。`); setCart([]); setCashAmount(0); await Promise.all([load(), loadCatalog()]); }
     setWorking("");
   }
 

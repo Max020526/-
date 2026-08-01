@@ -64,7 +64,7 @@ export function OrderDetail({ orderId, workspace = "admin" }: { orderId: string;
       p_order_id: orderId, p_command: command, p_payload: payload,
       p_idempotency_key: commandKey(command), p_request_id: crypto.randomUUID(),
     });
-    if (commandError) setError(friendlyError(commandError, commandError.message));
+    if (commandError) setError(friendlyError(commandError, "订单状态更新失败，请刷新后重试。"));
     else {
       const result = data as { pickup_code?: string } | null;
       setMessage(result?.pickup_code ? `操作成功。领取码：${result.pickup_code}（请安全告知顾客，仅显示本次）` : "操作已成功保存。");
