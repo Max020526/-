@@ -4,6 +4,7 @@ import { CheckCircle2, Home, LoaderCircle, Palette, Plus, Trash2, X } from "luci
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PageHead } from "@/components/shared/page-head";
+import { getColorDisplayName } from "@/lib/colors/display";
 import { friendlyError } from "@/lib/errors/friendly-error";
 import { getSupabase } from "@/lib/supabase/client";
 import { mergeInboundRows, normalizeModelNumber, type InboundDraftRow } from "@/lib/validation/inbound";
@@ -113,7 +114,7 @@ export default function FastInboundPage() {
     setNewColor({ name: "", code: "", hex: "#B8B8B8" });
     setShowNewColor(false);
     setColorSearch("");
-    setMessage(created.existing ? "这个颜色已经存在，已为你选中。" : `已新增颜色：${created.name_zh || created.name}（${created.code}）`);
+    setMessage(created.existing ? "这个颜色已经存在，已为你选中。" : `已新增颜色：${getColorDisplayName(created)}（${created.code}）`);
   }
 
   async function confirm() {
@@ -179,10 +180,10 @@ export default function FastInboundPage() {
       <div className="fast-color-list">{lines.map((line, index) => {
         const selected = colors.find((item) => item.id === line.colorId);
         const term = colorSearch.trim().toLowerCase();
-        const options = colors.filter((color) => color.id === line.colorId || !term || `${color.name_zh ?? ""} ${color.name} ${color.code ?? ""}`.toLowerCase().includes(term));
+        const options = colors.filter((color) => color.id === line.colorId || !term || `${getColorDisplayName(color)} ${color.name_zh ?? ""} ${color.name} ${color.code ?? ""}`.toLowerCase().includes(term));
         return <div className="fast-color-row" key={line.key}>
           <span className="fast-color-index">{index + 1}</span>
-          <div className="field"><label>颜色 *</label><select value={line.colorId} onChange={(event) => updateLine(line.key, "colorId", event.target.value)}><option value="">选择颜色</option>{options.map((color) => <option key={color.id} value={color.id}>{color.name_zh || color.name} · {color.code}</option>)}</select></div>
+          <div className="field"><label>颜色 *</label><select value={line.colorId} onChange={(event) => updateLine(line.key, "colorId", event.target.value)}><option value="">选择颜色</option>{options.map((color) => <option key={color.id} value={color.id}>{getColorDisplayName(color)} · {color.code}</option>)}</select></div>
           <div className="field"><label>数量 *</label><input type="number" inputMode="numeric" min="1" max="99999" value={line.quantity} onChange={(event) => updateLine(line.key, "quantity", event.target.value)} placeholder="18"/></div>
           <div className="fast-sku-preview"><span>SKU 预览</span><strong>{normalizeModelNumber(modelNumber) || "款号"}{selected?.code ? `-${selected.code}` : "-颜色"}</strong></div>
           <button type="button" className="icon-btn danger-icon" aria-label={`删除第${index + 1}种颜色`} disabled={lines.length === 1} onClick={() => setLines((current) => current.filter((item) => item.key !== line.key))}><Trash2 size={16}/></button>

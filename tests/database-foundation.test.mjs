@@ -11,6 +11,10 @@ const customColorMigrationPath = new URL(
   "../supabase/migrations/20260801110403_add_inbound_custom_colors.sql",
   import.meta.url,
 );
+const encodingRepairMigrationPath = new URL(
+  "../supabase/migrations/20260801114454_repair_reference_text_encoding.sql",
+  import.meta.url,
+);
 
 test("fast inbound migration keeps inventory writes behind controlled functions", async () => {
   const migration = await readFile(migrationPath, "utf8");
@@ -77,4 +81,12 @@ test("warehouse custom colors are created only through a controlled RPC", async 
   assert.match(migration, /revoke all on function public\.create_inbound_color\(text,text,text\) from public, anon/i);
   assert.match(migration, /grant execute on function public\.create_inbound_color\(text,text,text\) to authenticated/i);
   assert.doesNotMatch(migration, /grant insert[^;]*public\.colors[^;]*authenticated/i);
+});
+
+test("reference text encoding repair uses stable color codes and category slugs", async () => {
+  const migration = await readFile(encodingRepairMigrationPath, "utf8");
+  assert.match(migration, /where upper\(color\.code\) = canonical\.code/i);
+  assert.match(migration, /where category\.slug = canonical\.slug/i);
+  assert.match(migration, /'BLK', '黑色'/);
+  assert.match(migration, /'dresses', '连衣裙'/);
 });
