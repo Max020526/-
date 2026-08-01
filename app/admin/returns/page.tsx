@@ -1,7 +1,10 @@
-import { PlannedWorkspace } from "@/components/shared/planned-workspace";
-import { WORKSPACES } from "@/lib/workspaces";
+import Link from "next/link";
+import { ReturnsCenter } from "@/components/returns/returns-center";
+import { PageHead } from "@/components/shared/page-head";
 
-export default function ReturnsWorkspacePage() {
-  const workspace = WORKSPACES.find((item) => item.code === "P03")!;
-  return <PlannedWorkspace workspace={{ ...workspace, title: "退货退款" }} backHref="/admin/orders" backLabel="返回订单管理" capabilities={["退货申请与审核", "退款事务与支付记录", "质检后重新入库", "全链路状态与操作日志"]} />;
+export default function ReturnsPage() {
+  return <main className="page">
+    <PageHead eyebrow="P03 · RETURNS & REFUNDS" title="退货、质检与退款" subtitle="退货收货后先质检；仅可重新销售商品回到可售库存，退款独立留痕。" action={<Link className="button" href="/admin/orders">返回订单</Link>} />
+    <ReturnsCenter />
+  </main>;
 }
