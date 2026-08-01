@@ -2034,6 +2034,10 @@ export type Database = {
         Args: { p_header: Json; p_items: Json; p_raw_lines: Json }
         Returns: Json
       }
+      manage_product_image: {
+        Args: { p_action: string; p_image_id: string; p_product_id: string }
+        Returns: Json
+      }
       publish_product: { Args: { p_product_id: string }; Returns: Json }
       save_catalog_product: {
         Args: { p_product: Json; p_product_id: string; p_variants: Json }
