@@ -34,10 +34,10 @@
   ],
   "shortcuts": [
     {
-      "name": "拍照入库",
+      "name": "快速入库",
       "short_name": "入库",
-      "description": "拍摄商标并识别商品信息",
-      "url": "/warehouse/receipts/new"
+      "description": "录入款号、颜色和数量",
+      "url": "/inbound/new"
     },
     {
       "name": "管理中心",
@@ -45,9 +45,9 @@
       "url": "/admin"
     },
     {
-      "name": "NEXORA 商店",
-      "short_name": "商店",
-      "url": "/shop"
+      "name": "库存查询",
+      "short_name": "库存",
+      "url": "/inventory"
     }
   ]
 }

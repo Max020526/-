@@ -14,6 +14,8 @@ export const INTERNAL_ROUTE_RULES: Array<{
   { prefix: "/inbound", roles: ["employee", "admin"] },
   { prefix: "/products", roles: ["admin"] },
   { prefix: "/inventory", roles: ["employee", "admin"] },
+  { prefix: "/catalog", roles: ["employee", "admin"] },
+  { prefix: "/me", roles: ["employee", "admin"] },
 ];
 
 export function allowedInternalRoles(pathname: string) {

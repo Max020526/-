@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Noto_Sans_SC, Plus_Jakarta_Sans } from "next/font/google";
 import { PwaInstall } from "@/components/shared/pwa-install";
+import { NetworkStatus } from "@/components/shared/network-status";
 import "./globals.css";
 
 const sans = Noto_Sans_SC({
@@ -69,6 +70,7 @@ export default function RootLayout({
   return (
     <html lang="zh-CN">
       <body className={`${sans.variable} ${display.variable}`}>
+        <NetworkStatus />
         {children}
         <PwaInstall />
       </body>

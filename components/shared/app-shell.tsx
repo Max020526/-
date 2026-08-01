@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Bell, Boxes, ChevronRight, ClipboardList, ExternalLink, Home, LayoutDashboard, Menu, PackageCheck, Palette, PlusCircle, Settings, ShieldCheck, ShoppingBag, Tags, Truck, UserCog } from "lucide-react";
+import { BarChart3, Bell, Boxes, ChevronRight, ClipboardList, ExternalLink, Home, LayoutDashboard, Menu, PackageCheck, Palette, PlusCircle, Settings, ShieldCheck, ShoppingBag, Tags, Truck, UserCog, UserRound } from "lucide-react";
 import type { Portal } from "@/lib/constants";
 import { CurrentUser } from "@/components/shared/current-user";
 
@@ -25,6 +25,9 @@ function active(pathname:string, href:string){ return href === "/admin" || href 
 
 export function AppShell({ portal, title, children }: { portal:Portal; title:string; children:React.ReactNode }) {
   const pathname = usePathname();
+  const mobileLinks = portal === "warehouse"
+    ? [{ href: "/warehouse", label: "首页", icon: Home }, { href: "/inbound/new", label: "入库", icon: PlusCircle }, { href: "/catalog", label: "商品", icon: PackageCheck }, { href: "/warehouse/inventory", label: "库存", icon: Boxes }, { href: "/me", label: "我的", icon: UserRound }]
+    : [{ href: "/admin", label: "首页", icon: Home }, { href: "/inbound/new", label: "入库", icon: PlusCircle }, { href: "/admin/products", label: "商品", icon: PackageCheck }, { href: "/admin/inventory", label: "库存", icon: Boxes }, { href: "/me", label: "我的", icon: UserRound }];
   return <div className="app-shell">
     <aside className="sidebar">
       <Link href="/" className="sidebar-brand"><span className="brand-mark">N</span><div><b>NEXORA</b><small>{portal === "warehouse" ? "WAREHOUSE" : "OPERATIONS"}</small></div></Link>
@@ -35,6 +38,6 @@ export function AppShell({ portal, title, children }: { portal:Portal; title:str
       <header className="topbar"><span className="topbar-title">{title}</span><ChevronRight size={14} color="#a1aaa5"/><span className="muted" style={{fontSize:11}}>{new Intl.DateTimeFormat("zh-CN",{year:"numeric",month:"long",day:"numeric"}).format(new Date())}</span><div className="topbar-actions"><button className="icon-btn" aria-label="通知"><Bell size={17}/></button></div></header>
       {children}
     </div>
-    <nav className="mobile-nav"><Link className={active(pathname,portal==="warehouse"?"/warehouse":"/admin")?"active":""} href={portal==="warehouse"?"/warehouse":"/admin"}><Home size={19}/><span>首页</span></Link><Link href={portal==="warehouse"?"/warehouse/receipts/new":"/admin/products/pending"}><PackageCheck size={19}/><span>{portal==="warehouse"?"入库":"商品"}</span></Link><Link href={portal==="warehouse"?"/warehouse/inventory":"/admin/orders"}><ClipboardList size={19}/><span>{portal==="warehouse"?"库存":"订单"}</span></Link><Link href="/"><Menu size={19}/><span>端口</span></Link></nav>
+    <nav className="mobile-nav">{mobileLinks.map(({ href, label, icon: Icon }) => <Link key={href} className={active(pathname, href) ? "active" : ""} href={href}><Icon size={19}/><span>{label}</span></Link>)}</nav>
   </div>;
 }
