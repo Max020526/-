@@ -1,6 +1,7 @@
 "use client";
 
 import { CheckCircle2, LoaderCircle, Plus, Trash2 } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PageHead } from "@/components/shared/page-head";
 import { getSupabase } from "@/lib/supabase/client";
@@ -94,7 +95,7 @@ export default function FastInboundPage() {
       <div className="mini-stat"><span>新款号</span><b>{success.new_products ?? 0}</b></div>
       <div className="mini-stat"><span>新颜色SKU</span><b>{success.new_variants ?? 0}</b></div>
     </div>
-    <div className="form-actions" style={{ justifyContent: "center" }}><button className="button primary" onClick={continueEntry}>继续录入</button><a className="button" href="/inbound/today">查看今日入库</a></div>
+    <div className="form-actions" style={{ justifyContent: "center" }}><button className="button primary" onClick={continueEntry}>继续录入</button><Link className="button" href="/inbound/today">查看今日入库</Link></div>
   </section></main>;
 
   return <main className="page">

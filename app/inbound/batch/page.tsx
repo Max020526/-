@@ -1,6 +1,7 @@
 "use client";
 
 import { Check, ClipboardPaste, Copy, LoaderCircle, Plus, Trash2, TriangleAlert } from "lucide-react";
+import Link from "next/link";
 import { KeyboardEvent, useEffect, useMemo, useRef, useState } from "react";
 import { PageHead } from "@/components/shared/page-head";
 import { getSupabase } from "@/lib/supabase/client";
@@ -75,7 +76,7 @@ export default function BatchInboundPage() {
   }
 
   return <main className="page"><PageHead eyebrow="BATCH INBOUND" title="批量快速入库" subtitle="支持从 Excel 复制粘贴，多行一次验证并原子入库。"/>
-    {success && <div className="notice"><Check size={15}/> 入库成功：{success.inbound_number}，共 {success.total_quantity} 件。 <a href="/inbound/today">查看今日入库</a></div>}
+    {success && <div className="notice"><Check size={15}/> 入库成功：{success.inbound_number}，共 {success.total_quantity} 件。 <Link href="/inbound/today">查看今日入库</Link></div>}
     {message && <div className="notice warning"><TriangleAlert size={14}/> {message}</div>}
     <section className="form-card" style={{ marginBottom: 16 }}><div className="form-grid"><div className="field"><label><ClipboardPaste size={13}/> 从 Excel 粘贴三列数据</label><textarea style={{ minHeight: 92 }} value={pasteText} onChange={(event) => setPasteText(event.target.value)} placeholder={"DL30283\t黑色\t18\nDL30283\t棕色\t18"}/><div className="field-help">支持 Tab、逗号或分号分隔；颜色可填写中文、英文或代码。</div></div><div><div className="field"><label>入库仓库</label><select value={warehouseId} onChange={(event) => setWarehouseId(event.target.value)}>{warehouses.map((warehouse) => <option key={warehouse.id} value={warehouse.id}>{warehouse.name}（{warehouse.code}）</option>)}</select></div><button className="button" style={{ marginTop: 14 }} onClick={applyPaste}><ClipboardPaste size={15}/>导入到表格</button></div></div></section>
     <section className="panel"><div className="panel-head"><div><h2>批量录入表格</h2><p>按 Enter 跳到下一个输入框；重复款色确认时自动合并。</p></div><button className="button small" onClick={() => setRows((current) => [...current, blank(current.at(-1)?.modelNumber)])}><Plus size={14}/>新增行</button></div><div className="table-wrap"><table ref={table} onKeyDown={handleEnter} className="data-table" style={{ minWidth: 850 }}><thead><tr><th>款号</th><th>颜色</th><th>数量</th><th>SKU预览</th><th>检查结果</th><th>操作</th></tr></thead><tbody>{rows.map((row, index) => {

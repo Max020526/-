@@ -2005,6 +2005,10 @@ export type Database = {
         }
         Returns: Json
       }
+      cancel_inbound_order: {
+        Args: { p_inbound_order_id: string; p_reason: string }
+        Returns: Json
+      }
       confirm_inbound_order: {
         Args: {
           p_idempotency_key?: string
