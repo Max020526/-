@@ -2005,6 +2005,15 @@ export type Database = {
         }
         Returns: Json
       }
+      confirm_inbound_order: {
+        Args: {
+          p_idempotency_key?: string
+          p_items: Json
+          p_notes?: string
+          p_warehouse_id?: string
+        }
+        Returns: Json
+      }
       confirm_stock_receipt: { Args: { p_receipt_id: string }; Returns: Json }
       create_online_order: {
         Args: {
