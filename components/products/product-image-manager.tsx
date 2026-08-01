@@ -1,3 +1,5 @@
+/* Upload previews include local object URLs and dynamic storage URLs. */
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { ArrowDown, ArrowUp, ImagePlus, LoaderCircle, Star, Trash2 } from "lucide-react";

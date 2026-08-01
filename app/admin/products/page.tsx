@@ -1,3 +1,5 @@
+/* Supabase image hosts are tenant-configured at runtime. */
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import Link from "next/link";

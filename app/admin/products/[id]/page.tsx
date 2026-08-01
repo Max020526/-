@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, EyeOff, LoaderCircle, Save, Send } from "lucide-react";
@@ -15,7 +15,7 @@ import { ProductImageManager } from "@/components/products/product-image-manager
 const tabs=["基础信息","规格与库存","图片管理","价格设置","商品描述","网店设置","操作记录"];
 type Product=Record<string,any>;
 export default function ProductEdit(){const {id}=useParams<{id:string}>();const [tab,setTab]=useState(0);const [product,setProduct]=useState<Product|null>(null);const [categories,setCategories]=useState<any[]>([]);const [loading,setLoading]=useState(true);const [saving,setSaving]=useState(false);const [message,setMessage]=useState("");
-async function load(){const c=getSupabase();if(!c){setLoading(false);return;}setLoading(true);const [{data,error},{data:cats}]=await Promise.all([c.from("products").select("*,categories(name),brands(name),product_variants(*,colors(name),sizes(name),inventory(*)),product_images(*),online_listings(*)").eq("id",id).single(),c.from("categories").select("id,name").order("name")]);if(error)setMessage(error.message);setProduct(data);setCategories(cats??[]);setLoading(false);}useEffect(()=>{void load();},[id]);
+const load=useCallback(async()=>{const c=getSupabase();if(!c){setLoading(false);return;}setLoading(true);const [{data,error},{data:cats}]=await Promise.all([c.from("products").select("*,categories(name),brands(name),product_variants(*,colors(name),sizes(name),inventory(*)),product_images(*),online_listings(*)").eq("id",id).single(),c.from("categories").select("id,name").order("name")]);if(error)setMessage(error.message);setProduct(data);setCategories(cats??[]);setLoading(false);},[id]);useEffect(()=>{void load();},[load]);
 function field(name:string,value:any){setProduct(p=>p?{...p,[name]:value}:p)}
 async function save(fields:string[]){const c=getSupabase();if(!c||!product)return;setSaving(true);setMessage("");const payload=Object.fromEntries(fields.map(x=>[x,product[x]??null])) as TablesUpdate<"products">;const {error}=await c.from("products").update(payload).eq("id",id);setMessage(error?error.message:"保存成功");setSaving(false);if(!error)void load();}
 async function publish(){const c=getSupabase();if(!c)return;setSaving(true);const {data,error}=await c.rpc("publish_product",{p_product_id:id});const result=data as {message?:string}|null;setMessage(error?.message??result?.message??"商品已上架");setSaving(false);if(!error)void load();}

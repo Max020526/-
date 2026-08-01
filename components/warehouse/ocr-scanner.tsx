@@ -1,3 +1,5 @@
+/* OCR previews use local object URLs captured on the device. */
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useRef, useState } from "react";

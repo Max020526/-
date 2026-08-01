@@ -22,14 +22,20 @@ NEXORA 将供应商货单、仓库收货、商品资料、网店上架、顾客�
 - 订单数据库函数：幂等创建、库存占用、取消释放、发货扣减与销售流水。
 - Supabase Auth、角色表、全表 RLS、Storage 权限、审计日志与显式 Data API grants。
 - 自动化测试：核心解析场景和主要页面服务端渲染。
+- 服装快速入库：员工只填款号、颜色、数量，数据库事务自动创建商品、SKU、库存、入库单、流水和日志。
+- 批量入库：支持多行粘贴、键盘录入、重复合并、整批校验和原子提交。
+- 两级内部角色：`employee` 与 `admin`，页面、服务端接口和 RLS 同时鉴权。
+- 今日入库与取消：管理员取消会生成反向库存流水，不删除历史记录。
+- 基础资料管理：颜色、分类、供应商、员工账号和审计日志。
+- 报表导出：商品、库存、指定日期入库可导出 Excel 兼容的 UTF-8 BOM CSV。
 
-### 待完成
+### 后续外部集成（不属于本阶段）
 
 - 连续扫码设备接入与离线待办同步（库存写入仍必须联网，避免设备间库存冲突）。
 - 在线支付网关对接（当前支持订单创建与后台人工确认付款）。
-- 图片自动压缩和缩略图 Edge Function。
-- 分类、员工权限、报表等管理端的完整编辑界面。
-- 并发压测、真实设备验收与生产监控。
+- TikTok Shop、Shopify 与第三方物流真实 API。
+- 多仓库调拨、条码标签打印、供应商采购单和批发客户销售单。
+- 生产监控、支付渠道及真实设备的持续回归测试。
 
 ## 本地运行
 
@@ -61,7 +67,7 @@ NEXT_PUBLIC_SITE_URL=https://YOUR_DEPLOYED_DOMAIN
 - `lib/supabase/server.ts`：服务端用户会话，使用 Cookie 并继续受 RLS 限制。
 - `lib/supabase/admin.ts`：仅限后续员工管理等受保护的服务端代码，读取 `SUPABASE_SECRET_KEY`。
 
-`SUPABASE_SECRET_KEY` 第一阶段可以不配置。任何真实密钥都只能保存在 `.env.local`、Netlify 环境变量或 Sites 环境变量中，不能提交到 Git。
+`SUPABASE_SECRET_KEY` 仅供受保护的员工账号管理接口使用；不使用该功能时可以不配置。任何真实密钥都只能保存在 `.env.local`、Netlify 环境变量或 Sites 环境变量中，不能提交到 Git。
 
 ## 数据库初始化
 
@@ -79,7 +85,7 @@ npx supabase db seed
 
 主迁移位于 `supabase/migrations/`，其中包含核心表、约束、RLS、Storage 策略和事务函数。`supabase/seed.sql` 只写入分类等参考数据，不包含模拟商品、库存或订单。
 
-### 创建首个 Owner
+### 创建首个管理员与测试账号
 
 先通过 Supabase Auth 创建用户，再在 SQL Editor 中执行以下语句。把邮箱替换为实际 Owner 邮箱：
 
@@ -91,7 +97,16 @@ where u.email = 'owner@example.com' and r.name = 'OWNER'
 on conflict do nothing;
 ```
 
-之后 Owner 可通过管理端为员工分配 `WAREHOUSE_STAFF`、`PRODUCT_MANAGER` 或 `ORDER_STAFF`。
+同时把该账号映射到新的两级角色：
+
+```sql
+update public.profiles p
+set role = 'admin', is_active = true
+from auth.users u
+where p.id = u.id and u.email = 'owner@example.com';
+```
+
+首次登录后，管理员可在 `/settings/users` 创建 `employee` 测试账号、设置临时密码并随时停用。请勿在 README、Issue 或聊天记录中保存真实密码。
 
 ## 关键库存规则
 
@@ -146,4 +161,4 @@ tests/               解析与页面测试
 docs/                分阶段实施计划与阶段交付说明
 ```
 
-完整增量实施顺序见 `docs/IMPLEMENTATION_PLAN.md`。阶段说明见 `docs/PHASE_1.md` 与 `docs/PHASE_2.md`。
+完整增量实施顺序见 `docs/IMPLEMENTATION_PLAN.md`。14 个阶段均已完成，逐阶段验收记录位于 `docs/PHASE_1.md` 至 `docs/PHASE_14.md`。

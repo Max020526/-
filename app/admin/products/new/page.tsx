@@ -1,3 +1,5 @@
+/* Product previews use local object URLs and therefore cannot use next/image. */
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import type { ChangeEvent } from "react";

@@ -20,11 +20,11 @@ test("server-renders the NEXORA portal", async () => {
   assert.doesNotMatch(html, /codex-preview|Building your site/);
 });
 
-test("server-renders the warehouse and management surfaces", async () => {
+test("protects warehouse and management surfaces with login redirects", async () => {
   for (const path of ["/warehouse", "/admin"]) {
     const response = await render(path);
-    assert.equal(response.status, 200, path);
-    assert.match(await response.text(), /NEXORA/, path);
+    assert.equal(response.status, 307, path);
+    assert.match(response.headers.get("location") ?? "", /\/login\?next=/, path);
   }
 });
 
