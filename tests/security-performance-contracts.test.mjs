@@ -50,7 +50,26 @@ test("quick inbound uses one model number with multiple color rows and custom co
 
 test("warehouse and admin mobile navigation remain separate and can switch portals", async () => {
   const shell = await source("components/shared/app-shell.tsx");
-  assert.match(shell, /返回主页 · 切换端口/);
+  assert.match(shell, /返回主页 · 切换产品/);
   assert.match(shell, /href: "\/inbound\/batch", label: "批量入库"/);
   assert.match(shell, /href: "\/admin\/orders", label: "订单"/);
+});
+
+test("frontend products have one source of truth and legacy surfaces only redirect", async () => {
+  const workspaces = await source("lib/workspaces.ts");
+  for (const product of ["warehouse-pos", "internal-admin", "retail-storefront", "b2b-portal"]) {
+    assert.match(workspaces, new RegExp(product));
+  }
+  const receiptLedger = await source("app/warehouse/receipts/page.tsx");
+  assert.match(receiptLedger, /inbound_orders/);
+  assert.match(receiptLedger, /stock_receipts/);
+  assert.match(receiptLedger, /统一入库记录/);
+  for (const route of ["app/inbound/today/page.tsx", "app/inventory/page.tsx", "app/catalog/page.tsx"]) {
+    assert.match(await source(route), /redirect\(/, route);
+  }
+  for (const route of ["app/shop/cart/page.tsx", "app/shop/checkout/page.tsx", "app/shop/orders/page.tsx", "app/shop/products/[slug]/page.tsx"]) {
+    const contents = await source(route);
+    assert.match(contents, /redirect\(RETAIL_STOREFRONT_URL\)/, route);
+    assert.doesNotMatch(contents, /from\("shopping_|from\("orders"|from\("online_listings"/, route);
+  }
 });

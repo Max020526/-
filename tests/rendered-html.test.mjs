@@ -13,9 +13,11 @@ test("server-renders the NEXORA portal", async () => {
   assert.equal(response.status, 200);
   const html = await response.text();
   assert.match(html, /NEXORA/);
-  assert.match(html, /入库端/);
-  assert.match(html, /管理端/);
-  assert.match(html, /顾客网站入口/);
+  assert.match(html, /仓库与门店作业/);
+  assert.match(html, /内部经营管理/);
+  assert.match(html, /零售顾客网站/);
+  assert.match(html, /批发客户门户/);
+  assert.match(html, /P01 入库 · P04 履约 · P08 POS/);
   assert.match(html, /https:\/\/nexora-studio-shop\.xrx020526\.chatgpt\.site/);
   assert.doesNotMatch(html, /codex-preview|Building your site/);
 });
@@ -29,9 +31,11 @@ test("protects warehouse and management surfaces with login redirects", async ()
 });
 
 test("redirects the legacy shop entry to the independent customer website", async () => {
-  const response = await render("/shop");
-  assert.equal(response.status, 307);
-  assert.equal(response.headers.get("location"), "https://nexora-studio-shop.xrx020526.chatgpt.site/");
+  for (const path of ["/shop", "/shop/cart", "/shop/checkout", "/shop/orders", "/shop/products/demo"]) {
+    const response = await render(path);
+    assert.equal(response.status, 307, path);
+    assert.equal(response.headers.get("location"), "https://nexora-studio-shop.xrx020526.chatgpt.site/", path);
+  }
 });
 
 test("adds browser security headers", async () => {

@@ -83,6 +83,14 @@ test("warehouse custom colors are created only through a controlled RPC", async 
   assert.doesNotMatch(migration, /grant insert[^;]*public\.colors[^;]*authenticated/i);
 });
 
+test("inventory facts and movements are writable only through controlled RPCs", async () => {
+  const migration = await readFile(new URL("../supabase/migrations/20260801143000_enforce_inventory_rpc_only.sql", import.meta.url), "utf8");
+  assert.match(migration, /revoke insert, update, delete, truncate on table public\.inventory from anon, authenticated/);
+  assert.match(migration, /revoke insert, update, delete, truncate on table public\.inventory_movements from anon, authenticated/);
+  assert.match(migration, /drop policy if exists manage_update_inventory/);
+  assert.match(migration, /drop policy if exists manage_delete_inventory_movements/);
+});
+
 test("reference text encoding repair uses stable color codes and category slugs", async () => {
   const migration = await readFile(encodingRepairMigrationPath, "utf8");
   assert.match(migration, /where upper\(color\.code\) = canonical\.code/i);

@@ -1,3 +1,3 @@
-import Link from "next/link";
-import { Search, ShoppingBag, UserRound } from "lucide-react";
-export default function ShopLayout({children}:{children:React.ReactNode}) {return <div className="shop-shell"><header className="shop-nav"><Link className="shop-brand" href="/shop">NEXORA</Link><nav className="shop-links"><Link href="/shop">新品</Link><Link href="/shop?category=clothing">服装</Link><Link href="/shop?sort=bestseller">热销</Link><Link href="/shop/orders">我的订单</Link><Link href="/shop#service">服务保障</Link></nav><div className="shop-actions"><button className="icon-btn" aria-label="搜索"><Search size={17}/></button><Link className="icon-btn" href="/login" aria-label="账户"><UserRound size={17}/></Link><Link className="icon-btn" href="/shop/cart" aria-label="购物车"><ShoppingBag size={17}/></Link></div></header>{children}</div>}
+export default function LegacyShopLayout({ children }: { children: React.ReactNode }) {
+  return children;
+}
