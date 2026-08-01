@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BarChart3, Bell, Boxes, ChevronRight, ClipboardList, ExternalLink, Home, LayoutDashboard, Menu, PackageCheck, PlusCircle, ShoppingBag, Truck } from "lucide-react";
 import type { Portal } from "@/lib/constants";
+import { CurrentUser } from "@/components/shared/current-user";
 
 const nav = {
   warehouse: [
@@ -27,7 +28,7 @@ export function AppShell({ portal, title, children }: { portal:Portal; title:str
     <aside className="sidebar">
       <Link href="/" className="sidebar-brand"><span className="brand-mark">N</span><div><b>NEXORA</b><small>{portal === "warehouse" ? "WAREHOUSE" : "OPERATIONS"}</small></div></Link>
       <nav>{nav[portal].map(group => <div key={group.section}><div className="nav-section">{group.section}</div>{group.links.map(({href,label,icon:Icon,external}) => external ? <a key={href} href={href} target="_blank" rel="noreferrer" className="nav-link"><Icon size={17}/><span>{label}</span></a> : <Link key={href} href={href} className={`nav-link ${active(pathname,href)?"active":""}`}><Icon size={17}/><span>{label}</span></Link>)}</div>)}</nav>
-      <div className="sidebar-foot"><div className="user-mini"><div className="avatar">NX</div><div><b>NEXORA 员工</b><span>未登录</span></div></div></div>
+      <div className="sidebar-foot"><CurrentUser/></div>
     </aside>
     <div className="app-main">
       <header className="topbar"><span className="topbar-title">{title}</span><ChevronRight size={14} color="#a1aaa5"/><span className="muted" style={{fontSize:11}}>{new Intl.DateTimeFormat("zh-CN",{year:"numeric",month:"long",day:"numeric"}).format(new Date())}</span><div className="topbar-actions"><button className="icon-btn" aria-label="通知"><Bell size={17}/></button></div></header>
