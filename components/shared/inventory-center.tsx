@@ -61,7 +61,7 @@ export function InventoryCenter({ mode }: { mode: Mode }) {
     if (!window.confirm(`确认把 ${variant?.sku ?? "该 SKU"} 的实际库存从 ${selected.quantity_on_hand} 调整为 ${next}？`)) return;
     const client = getSupabase(); if (!client) return;
     setWorking("adjust"); setMessage(null);
-    const { data: result, error } = await client.rpc("adjust_inventory_stock", { p_inventory_id: selected.id, p_counted_quantity: next, p_reason: reason, p_notes: notes || null });
+    const { data: result, error } = await client.rpc("adjust_inventory_stock", { p_inventory_id: selected.id, p_counted_quantity: next, p_reason: reason, p_notes: notes || undefined });
     if (error) setMessage({ tone: "warning", text: error.message });
     else {
       const response = result as { changed?: boolean; quantity_change?: number } | null;

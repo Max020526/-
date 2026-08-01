@@ -91,7 +91,7 @@ export default function NewCatalogProductPage() {
     const payload = { ...form, slug: form.slug.trim().toLowerCase(), warehouse_id: form.warehouse_id };
     const variantPayload = variants.map(({ key: _key, ...item }) => ({ ...item, sku: item.sku || generateSku({ key: _key, ...item }) }));
     const { data, error } = await client.rpc("save_catalog_product", {
-      p_product_id: productId, p_product: payload as unknown as Json, p_variants: variantPayload as unknown as Json,
+      p_product_id: productId as string, p_product: payload as unknown as Json, p_variants: variantPayload as unknown as Json,
     });
     setSaving(false);
     if (error) { setMessage(error.message); return null; }

@@ -146,4 +146,4 @@ tests/               解析与页面测试
 docs/                分阶段实施计划与阶段交付说明
 ```
 
-完整增量实施顺序见 `docs/IMPLEMENTATION_PLAN.md`。第1阶段说明见 `docs/PHASE_1.md`。
+完整增量实施顺序见 `docs/IMPLEMENTATION_PLAN.md`。阶段说明见 `docs/PHASE_1.md` 与 `docs/PHASE_2.md`。

@@ -31,3 +31,12 @@
 - `.env.example` 不包含真实密钥。
 - Sites 与 Netlify 分别有独立构建入口。
 - `lint`、`typecheck`、Sites 构建和 Netlify 构建均成功。
+
+## 第二阶段完成标准
+
+- 现有业务表和数据不删除，新增快速入库兼容表与标准字段。
+- `employee` / `admin` 与旧角色安全映射，商城顾客保持隔离。
+- 快速入库表启用 RLS，库存表禁止客户端直接写入。
+- 26 个标准颜色代码、基础分类与 `ONE_SIZE` 可重复初始化。
+- 每日入库编号由数据库原子生成，并通过格式、唯一性与回滚验证。
+- 线上 Supabase 迁移、类型生成、Advisors、lint、typecheck 和构建均通过。
