@@ -1,4 +1,4 @@
-const VERSION = "nexora-pwa-v5";
+const VERSION = "nexora-pwa-v6";
 const STATIC_CACHE = `${VERSION}-static`;
 const CORE_ASSETS = ["/offline", "/favicon.svg", "/app-icon-192.png", "/app-icon-512.png", "/manifest.webmanifest"];
 
@@ -27,7 +27,22 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  if (["style", "script", "font", "image"].includes(request.destination)) {
+  if (["style", "script"].includes(request.destination)) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(STATIC_CACHE).then((cache) => cache.put(request, copy));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request)),
+    );
+    return;
+  }
+
+  if (["font", "image"].includes(request.destination)) {
     event.respondWith(
       caches.match(request).then((cached) => {
         const fresh = fetch(request)
