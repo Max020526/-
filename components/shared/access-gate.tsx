@@ -4,11 +4,13 @@ import Link from "next/link";
 import { LoaderCircle, LockKeyhole, ShieldAlert } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getSupabase } from "@/lib/supabase/client";
+import { firstMissingPermission, loadAuthorization } from "@/lib/auth/permissions";
 import { normalizeInternalRole, type InternalRole } from "@/lib/auth/roles";
 
 type GateState = "loading" | "signed-out" | "forbidden" | "allowed";
+const EMPTY_PERMISSIONS: readonly string[] = [];
 
-export function AccessGate({ roles, children }: { roles: readonly InternalRole[]; children: React.ReactNode }) {
+export function AccessGate({ roles, permissions = EMPTY_PERMISSIONS, children }: { roles: readonly InternalRole[]; permissions?: readonly string[]; children: React.ReactNode }) {
   const [state, setState] = useState<GateState>("loading");
 
   useEffect(() => {
@@ -16,14 +18,18 @@ export function AccessGate({ roles, children }: { roles: readonly InternalRole[]
     void (async () => {
       const client = getSupabase();
       if (!client) { if (active) setState("forbidden"); return; }
-      const { data: auth } = await client.auth.getUser();
-      if (!auth.user) { if (active) setState("signed-out"); return; }
-      const { data } = await client.from("profiles").select("role,is_active").eq("id", auth.user.id).maybeSingle();
-      const role = normalizeInternalRole(data?.role);
-      if (active) setState(data?.is_active && role && roles.includes(role) ? "allowed" : "forbidden");
+      try {
+        const authorization = await loadAuthorization(client);
+        const role = normalizeInternalRole(authorization.role);
+        const allowed = Boolean(role && roles.includes(role) && !firstMissingPermission(authorization, permissions));
+        if (active) setState(allowed ? "allowed" : "forbidden");
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        if (active) setState(/session|jwt|auth/i.test(message) ? "signed-out" : "forbidden");
+      }
     })();
     return () => { active = false; };
-  }, [roles]);
+  }, [roles, permissions]);
 
   if (state === "allowed") return children;
   return <main className="portal-page" style={{ display: "grid", placeItems: "center" }}>

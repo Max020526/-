@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import {
   Boxes,
   ChevronRight,
@@ -27,6 +28,15 @@ import {
 import type { Portal } from "@/lib/constants";
 import { CurrentUser } from "@/components/shared/current-user";
 import { RETAIL_STOREFRONT_URL } from "@/lib/workspaces";
+import { getSupabase } from "@/lib/supabase/client";
+import { loadAuthorization } from "@/lib/auth/permissions";
+
+const NAV_PERMISSIONS: Record<string,string> = {
+  "/warehouse/receipts/new":"receiving.create","/warehouse/receipts":"receiving.view","/inbound/new":"inventory.create",
+  "/warehouse/inventory":"inventory.view","/admin/products":"product.view","/admin/inventory":"inventory.view",
+  "/admin/orders":"order.view","/admin/finance":"finance.view","/settings/users":"employee.view",
+  "/settings/audit":"audit.view","/settings/categories":"system.settings.view","/settings/colors":"system.settings.view","/settings/suppliers":"system.settings.view",
+};
 
 const nav = {
   warehouse: [
@@ -84,6 +94,9 @@ function active(pathname: string, href: string) {
 
 export function AppShell({ portal, title, children }: { portal: Portal; title: string; children: React.ReactNode }) {
   const pathname = usePathname();
+  const [permissions,setPermissions]=useState<Set<string>|null>(null);
+  useEffect(()=>{let active=true;const client=getSupabase();if(!client){setPermissions(new Set());return;}void loadAuthorization(client).then((auth)=>{if(active)setPermissions(new Set(auth.permissions));}).catch(()=>{if(active)setPermissions(new Set());});return()=>{active=false};},[]);
+  const visible=(href:string,external?:boolean)=>external||href==="/"||!NAV_PERMISSIONS[href]||Boolean(permissions?.has(NAV_PERMISSIONS[href]));
   const mobileLinks = portal === "warehouse"
     ? [
       { href: "/warehouse", label: "首页", icon: Home },
@@ -103,13 +116,13 @@ export function AppShell({ portal, title, children }: { portal: Portal; title: s
   return <div className="app-shell">
     <aside className="sidebar">
       <Link href="/" className="sidebar-brand"><span className="brand-mark">N</span><div><b>NEXORA</b><small>{portal === "warehouse" ? "WAREHOUSE & POS" : "INTERNAL ADMIN"}</small></div></Link>
-      <nav>{nav[portal].map((group) => <div key={group.section}><div className="nav-section">{group.section}</div>{group.links.map(({ href, label, icon: Icon, external }) => external ? <a key={href} href={href} target="_blank" rel="noreferrer" className="nav-link"><Icon size={17} /><span>{label}</span></a> : <Link key={href} href={href} className={`nav-link ${active(pathname, href) ? "active" : ""}`}><Icon size={17} /><span>{label}</span></Link>)}</div>)}</nav>
+      <nav>{nav[portal].map((group) => <div key={group.section}><div className="nav-section">{group.section}</div>{group.links.filter(({href,external})=>visible(href,external)).map(({ href, label, icon: Icon, external }) => external ? <a key={href} href={href} target="_blank" rel="noreferrer" className="nav-link"><Icon size={17} /><span>{label}</span></a> : <Link key={href} href={href} className={`nav-link ${active(pathname, href) ? "active" : ""}`}><Icon size={17} /><span>{label}</span></Link>)}</div>)}</nav>
       <div className="sidebar-foot"><CurrentUser /></div>
     </aside>
     <div className="app-main">
       <header className="topbar"><span className="topbar-title">{title}</span><ChevronRight size={14} color="#a1aaa5" /><span className="muted" style={{ fontSize: 11 }}>{new Intl.DateTimeFormat("zh-CN", { year: "numeric", month: "long", day: "numeric" }).format(new Date())}</span><div className="topbar-actions"><Link className="button small" href="/"><Menu size={14} />返回主页 · 切换产品</Link></div></header>
       {children}
     </div>
-    <nav className="mobile-nav">{mobileLinks.map(({ href, label, icon: Icon }) => <Link key={href} className={active(pathname, href) ? "active" : ""} href={href}><Icon size={19} /><span>{label}</span></Link>)}</nav>
+    <nav className="mobile-nav">{mobileLinks.filter(({href})=>visible(href)).map(({ href, label, icon: Icon }) => <Link key={href} className={active(pathname, href) ? "active" : ""} href={href}><Icon size={19} /><span>{label}</span></Link>)}</nav>
   </div>;
 }

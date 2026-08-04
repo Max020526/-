@@ -35,10 +35,13 @@ test("login redirects stay inside role-authorized workspaces and auth responses 
 
 test("admin user mutations enforce origin, size and self-role protections", async () => {
   const route = await source("app/api/admin/users/route.ts");
-  assert.match(route, /isSameOrigin\(request\)/);
-  assert.match(route, /MAX_BODY_BYTES/);
-  assert.match(route, /password\.length < 12/);
-  assert.match(route, /id === actor\.id && \(!isActive \|\| !canManageUsers\(normalizeInternalRole\(role\)\)\)/);
+  const invitationRoute = await source("app/api/admin/invitations/route.ts");
+  const registrationRoute = await source("app/api/employee/register/route.ts");
+  assert.match(route, /sameOrigin\(request\)/);
+  assert.match(invitationRoute, /sameOrigin\(request\)/);
+  assert.match(registrationRoute, /MAX_BODY_BYTES/);
+  assert.match(registrationRoute, /password\.length<12/);
+  assert.match(route, /id===actor\.id&&\(!isActive/);
   assert.match(route, /Cache-Control.*no-store/s);
 });
 
@@ -66,6 +69,32 @@ test("quick inbound uses one model number with multiple color rows and custom co
   assert.match(page, /rpc_post_inbound_receipt/);
   assert.match(page, /create_inbound_color/);
   assert.match(page, /没有这个颜色？新增/);
+});
+
+test("quick inbound uses canonical permissions and explicit warehouse scope", async () => {
+  const page = await source("app/inbound/new/page.tsx");
+  const permissions = await source("lib/auth/permissions.ts");
+  const diagnostics = await source("components/shared/permission-diagnostics.tsx");
+  const migration = await source("supabase/migrations/20260804120000_fast_inbound_canonical_permissions.sql");
+  for (const key of [
+    "inventory.view", "inventory.create", "inventory.adjust",
+    "receiving.create", "receiving.confirm", "sku.create",
+  ]) {
+    assert.match(permissions, new RegExp(key.replace(".", "\\.")));
+    assert.match(migration, new RegExp(key.replace(".", "\\.")));
+  }
+  assert.match(page, /loadAuthorization/);
+  assert.match(page, /正在加载权限/);
+  assert.match(page, /warehouse\.assignment/);
+  assert.match(migration, /create table if not exists public\.user_warehouses/);
+  assert.match(migration, /private\.is_global_warehouse_operator/);
+  assert.match(migration, /private\.has_warehouse_access/);
+  assert.match(migration, /receiving_insert_stock_receipts/);
+  assert.match(migration, /receiving_insert_stock_receipt_items/);
+  assert.match(migration, /receiving_insert_inventory_movements/);
+  for (const field of ["currentUserId", "role", "permissions", "warehouseIds", "failedPermission"]) {
+    assert.match(diagnostics, new RegExp(field));
+  }
 });
 
 test("warehouse and admin mobile navigation remain separate and can switch portals", async () => {

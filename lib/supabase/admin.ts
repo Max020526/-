@@ -1,7 +1,6 @@
 import "server-only";
 
 import { createClient } from "@supabase/supabase-js";
-import type { Database } from "@/types/database";
 import { requirePublicSupabaseConfig } from "./config";
 
 export function createSupabaseAdminClient() {
@@ -12,7 +11,9 @@ export function createSupabaseAdminClient() {
     throw new Error("服务端管理员密钥尚未配置。");
   }
 
-  return createClient<Database>(url, secretKey, {
+  // Admin routes intentionally use an untyped client because the service-only
+  // registration tables are not exposed to browser-generated database types.
+  return createClient(url, secretKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,

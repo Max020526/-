@@ -5,6 +5,7 @@ export const INTERNAL_ROLES = [
   "system_admin",
   "warehouse_manager",
   "warehouse_staff",
+  "merchandiser",
   "product_operator",
   "order_cs",
   "buyer",
@@ -22,6 +23,7 @@ export const ROLE_LABELS: Record<InternalRole, string> = {
   system_admin: "系统管理员",
   warehouse_manager: "仓库主管",
   warehouse_staff: "仓库员工",
+  merchandiser: "商品运营（分类范围）",
   product_operator: "商品运营",
   order_cs: "订单与客服",
   buyer: "采购",
@@ -43,6 +45,7 @@ export const ADMIN_ROLES: readonly InternalRole[] = [
   "owner",
   "system_admin",
   "product_operator",
+  "merchandiser",
   "order_cs",
   "buyer",
   "finance",
@@ -67,7 +70,7 @@ export const INTERNAL_ROUTE_RULES: Array<{
   roles: readonly InternalRole[];
 }> = [
   { prefix: "/settings", roles: SYSTEM_ADMIN_ROLES },
-  { prefix: "/admin/products", roles: ["owner", "system_admin", "product_operator"] },
+  { prefix: "/admin/products", roles: ["owner", "system_admin", "product_operator", "merchandiser"] },
   { prefix: "/admin/orders", roles: ["owner", "system_admin", "order_cs"] },
   { prefix: "/admin/returns", roles: ["owner", "system_admin", "order_cs"] },
   { prefix: "/admin/purchasing", roles: ["owner", "system_admin", "buyer", "finance", "auditor"] },
@@ -81,7 +84,7 @@ export const INTERNAL_ROUTE_RULES: Array<{
   { prefix: "/inbound/new", roles: ["owner", "system_admin", "warehouse_manager"] },
   { prefix: "/inbound/batch", roles: ["owner", "system_admin", "warehouse_manager"] },
   { prefix: "/inbound", roles: WAREHOUSE_ROLES },
-  { prefix: "/products", roles: ["owner", "system_admin", "product_operator"] },
+  { prefix: "/products", roles: ["owner", "system_admin", "product_operator", "merchandiser"] },
   { prefix: "/inventory", roles: INVENTORY_ROLES },
   { prefix: "/catalog", roles: INVENTORY_ROLES },
   { prefix: "/me", roles: [...WAREHOUSE_ROLES, ...ADMIN_ROLES] },
@@ -107,6 +110,7 @@ export function defaultInternalRoute(role: InternalRole) {
     case "auditor":
       return "/admin/business";
     case "product_operator":
+    case "merchandiser":
       return "/admin/products";
     case "order_cs":
       return "/admin/orders";
