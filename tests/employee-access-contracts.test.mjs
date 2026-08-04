@@ -21,5 +21,5 @@ test("RBAC includes explicit deny and warehouse/category scopes",async()=>{
 
 test("admin UI exposes invitations, data scopes, permission overrides and security actions",async()=>{
   const page=await source("app/settings/users/page.tsx");
-  for(const value of ["重新发送","复制链接","撤销","延长 7 天","仓库范围","商品分类范围","明确拒绝","重置密码","强制退出","查看操作日志"]){assert.match(page,new RegExp(value));}
+  for(const value of ["重新发送","复制链接","撤销","延长 7 天","仓库范围","商品分类范围","禁止","重置密码","强制退出","查看操作日志"]){assert.match(page,new RegExp(value));}
 });
