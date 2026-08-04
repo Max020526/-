@@ -4,6 +4,8 @@ import { CheckCircle2, Home, LoaderCircle, Palette, Plus, Trash2, X } from "luci
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { PageHead } from "@/components/shared/page-head";
+import { PermissionDiagnostics } from "@/components/shared/permission-diagnostics";
+import { FAST_INBOUND_PERMISSIONS, firstMissingPermission, loadAuthorization, type Authorization } from "@/lib/auth/permissions";
 import { getColorDisplayName } from "@/lib/colors/display";
 import { friendlyError } from "@/lib/errors/friendly-error";
 import { getSupabase } from "@/lib/supabase/client";
@@ -33,6 +35,8 @@ export default function FastInboundPage() {
   const [arrivalDate, setArrivalDate] = useState(new Date().toISOString().slice(0, 10));
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(true);
+  const [authorization, setAuthorization] = useState<Authorization | null>(null);
+  const [failedPermission, setFailedPermission] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
   const [success, setSuccess] = useState<Success | null>(null);
@@ -58,7 +62,16 @@ export default function FastInboundPage() {
     void (async () => {
       const client = getSupabase();
       if (!client) { setMessage("系统尚未连接 Supabase。"); setLoading(false); return; }
+      let authorizationLoaded = false;
       try {
+        const nextAuthorization = await loadAuthorization(client);
+        authorizationLoaded = true;
+        const missingPermission = firstMissingPermission(nextAuthorization, FAST_INBOUND_PERMISSIONS);
+        const missingWarehouse = !nextAuthorization.allWarehouses && nextAuthorization.warehouseIds.length === 0;
+        setAuthorization(nextAuthorization);
+        setFailedPermission(missingPermission ?? (missingWarehouse ? "warehouse.assignment" : null));
+        if (missingPermission || missingWarehouse) return;
+
         const [, warehouseResult, sizeResult, supplierResult] = await Promise.all([
           loadColors(),
           client.from("warehouses").select("id,name,code").eq("is_active", true).order("created_at"),
@@ -66,7 +79,9 @@ export default function FastInboundPage() {
           client.from("suppliers").select("id,name").eq("is_active", true).is("deleted_at", null).order("name"),
         ]);
         if (warehouseResult.error || sizeResult.error || supplierResult.error) throw warehouseResult.error ?? sizeResult.error ?? supplierResult.error;
-        const nextWarehouses = (warehouseResult.data ?? []) as Warehouse[];
+        const nextWarehouses = ((warehouseResult.data ?? []) as Warehouse[]).filter(
+          (warehouse) => nextAuthorization.allWarehouses || nextAuthorization.warehouseIds.includes(warehouse.id),
+        );
         setWarehouses(nextWarehouses);
         setWarehouseId(nextWarehouses[0]?.id ?? "");
         const nextSizes = (sizeResult.data ?? []) as Size[];
@@ -75,6 +90,7 @@ export default function FastInboundPage() {
         const defaultSize = nextSizes.find((size) => size.normalized_name === "ONE_SIZE")?.id ?? nextSizes[0]?.id ?? "";
         setLines([makeLine("", defaultSize)]);
       } catch (error) {
+        if (!authorizationLoaded) setFailedPermission("authorization.load");
         setMessage(friendlyError(error, "基础资料加载失败，请刷新页面重试。"));
       } finally {
         setLoading(false);
@@ -133,6 +149,7 @@ export default function FastInboundPage() {
   }
 
   async function confirm() {
+    if (failedPermission) { setMessage(`缺少权限或仓库分配：${failedPermission}`); return; }
     if (saving || summary.error || !summary.items.length) { setMessage(summary.error || "请至少填写一种颜色和数量。"); return; }
     const client = getSupabase();
     if (!client) return;
@@ -178,9 +195,28 @@ export default function FastInboundPage() {
     <div className="form-actions" style={{ justifyContent: "center" }}><button className="button primary" onClick={continueEntry}>继续录入</button><Link className="button" href="/inbound/today">查看今日入库</Link><Link className="button" href="/"><Home size={15}/>切换端口</Link></div>
   </section></main>;
 
+  if (loading) return <main className="page" style={{ display: "grid", placeItems: "center", minHeight: 420 }}>
+    <section className="form-card" style={{ width: "min(470px,100%)", textAlign: "center" }}>
+      <LoaderCircle size={24} style={{ margin: "0 auto 14px" }}/>
+      <h1 style={{ fontSize: 24 }}>正在加载权限</h1>
+      <p className="muted" style={{ marginTop: 8 }}>正在刷新登录状态并检查角色、权限和仓库范围。</p>
+      <PermissionDiagnostics authorization={authorization} failedPermission={failedPermission}/>
+    </section>
+  </main>;
+
+  if (failedPermission) return <main className="page" style={{ display: "grid", placeItems: "center", minHeight: 420 }}>
+    <section className="form-card" style={{ width: "min(540px,100%)", textAlign: "center" }}>
+      <p className="eyebrow">PERMISSION REQUIRED</p>
+      <h1 style={{ fontSize: 24, marginTop: 8 }}>当前账号没有执行此操作的权限</h1>
+      <p className="muted" style={{ marginTop: 8 }}>{failedPermission === "warehouse.assignment" ? "该员工尚未分配可操作仓库。" : `缺少权限：${failedPermission}`}</p>
+      <PermissionDiagnostics authorization={authorization} failedPermission={failedPermission}/>
+    </section>
+  </main>;
+
   return <main className="page">
     <PageHead eyebrow="FAST INBOUND" title="服装快速入库" subtitle={`${new Intl.DateTimeFormat("zh-CN", { dateStyle: "long" }).format(new Date())} · 一个款号可一次录入多种颜色和尺码`} action={<Link className="button" href="/"><Home size={15}/>切换端口</Link>}/>
     {message && <div className="notice warning">{message}</div>}
+    <PermissionDiagnostics authorization={authorization} failedPermission={failedPermission}/>
 
     <section className="form-card fast-model-card">
       <div className="field"><label>款号 *</label><input ref={modelInput} value={modelNumber} onChange={(event) => setModelNumber(event.target.value)} onBlur={(event) => setModelNumber(normalizeModelNumber(event.target.value))} placeholder="例如：DL30283" autoCapitalize="characters" maxLength={50}/><div className="field-help">这个款号只需填写一次，下面可以连续添加黑色、棕色、红色等多种颜色。</div></div>
