@@ -68,12 +68,10 @@ export default function Login() {
 
   return <main className="portal-page" style={{ display: "grid", placeItems: "center" }}>
     <section className="form-card" style={{ width: "min(440px,100%)" }}>
-      <Link href="/" className="muted" style={{ display: "flex", gap: 6, alignItems: "center", fontSize: 11 }}><ArrowLeft size={14}/>返回端口选择</Link>
+      <Link href="/" className="button small" style={{ width: "max-content" }}><ArrowLeft size={15}/>返回主页</Link>
       <div style={{ textAlign: "center", margin: "26px 0 22px" }}>
         <span className="brand-mark" style={{ margin: "auto" }}>N</span>
-        <p className="eyebrow" style={{ marginTop: 16 }}>INTERNAL SECURE ACCESS</p>
-        <h1 style={{ fontSize: 27, margin: "8px 0" }}>{mode === "login" ? "登录 NEXORA" : "重设密码"}</h1>
-        <p className="muted" style={{ fontSize: 12 }}>{mode === "forgot" ? "我们会向你的邮箱发送安全链接" : "系统将按岗位角色开放对应工作区"}</p>
+        <h1 style={{ fontSize: 30, margin: "18px 0 0" }}>{mode === "login" ? "登录 NEXORA" : "重设密码"}</h1>
       </div>
       <SetupBanner/>
       <form onSubmit={submit}>
@@ -83,8 +81,7 @@ export default function Login() {
         <button className="button primary" style={{ width: "100%", marginTop: 18 }} disabled={loading}>{loading && <LoaderCircle size={15}/>} {mode === "login" ? "登录" : "发送重设邮件"}</button>
       </form>
       <button type="button" className="tab" style={{ display: "block", margin: "12px auto 0" }} onClick={() => { setMode(mode === "login" ? "forgot" : "login"); setMessage(""); }}>{mode === "login" ? "忘记密码？" : "返回登录"}</button>
-      <a className="muted" href={CUSTOMER_SITE} target="_blank" rel="noreferrer" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 5, fontSize: 10, marginTop: 15 }}>顾客请前往独立商城 <ExternalLink size={11}/></a>
-      <p className="muted" style={{ fontSize: 10, textAlign: "center", marginTop: 10 }}>内部账号由管理员创建并分配权限。</p>
+      <a className="button" href={CUSTOMER_SITE} target="_blank" rel="noreferrer" style={{ display: "flex", marginTop: 14 }}>打开顾客商城 <ExternalLink size={15}/></a>
     </section>
   </main>;
 }
