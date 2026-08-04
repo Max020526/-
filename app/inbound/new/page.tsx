@@ -26,7 +26,6 @@ export default function FastInboundPage() {
   const [lines, setLines] = useState<ColorLine[]>([]);
   const [colors, setColors] = useState<Color[]>([]);
   const [sizes, setSizes] = useState<Size[]>([]);
-  const [colorSearch, setColorSearch] = useState("");
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [warehouseId, setWarehouseId] = useState("");
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -144,7 +143,6 @@ export default function FastInboundPage() {
     });
     setNewColor({ name: "", code: "", hex: "#B8B8B8" });
     setShowNewColor(false);
-    setColorSearch("");
     setMessage(created.existing ? "这个颜色已经存在，已为你选中。" : `已新增颜色：${getColorDisplayName(created)}（${created.code}）`);
   }
 
@@ -178,7 +176,6 @@ export default function FastInboundPage() {
     setSupplierReference("");
     setSuccess(null);
     setMessage("");
-    setColorSearch("");
     idempotencyKey.current = crypto.randomUUID();
     setTimeout(() => modelInput.current?.focus(), 50);
   }
@@ -213,45 +210,38 @@ export default function FastInboundPage() {
     </section>
   </main>;
 
-  return <main className="page">
-    <PageHead eyebrow="FAST INBOUND" title="服装快速入库" subtitle={`${new Intl.DateTimeFormat("zh-CN", { dateStyle: "long" }).format(new Date())} · 一个款号可一次录入多种颜色和尺码`} action={<Link className="button" href="/"><Home size={15}/>切换端口</Link>}/>
+  return <main className="page fast-inbound-page">
+    <PageHead eyebrow="" title="快速入库" subtitle="" />
     {message && <div className="notice warning">{message}</div>}
     <PermissionDiagnostics authorization={authorization} failedPermission={failedPermission}/>
 
-    <section className="form-card fast-model-card">
-      <div className="field"><label>款号 *</label><input ref={modelInput} value={modelNumber} onChange={(event) => setModelNumber(event.target.value)} onBlur={(event) => setModelNumber(normalizeModelNumber(event.target.value))} placeholder="例如：DL30283" autoCapitalize="characters" maxLength={50}/><div className="field-help">这个款号只需填写一次，下面可以连续添加黑色、棕色、红色等多种颜色。</div></div>
+    <section className="form-card fast-model-card fast-primary-card">
+      <div className="field"><label>款号</label><input ref={modelInput} value={modelNumber} onChange={(event) => setModelNumber(event.target.value)} onBlur={(event) => setModelNumber(normalizeModelNumber(event.target.value))} placeholder="例如 DL30283" autoCapitalize="characters" maxLength={50}/></div>
       <div className="field"><label>入库仓库</label><select value={warehouseId} onChange={(event) => setWarehouseId(event.target.value)} disabled={loading}>{warehouses.map((warehouse) => <option key={warehouse.id} value={warehouse.id}>{warehouse.name}（{warehouse.code}）</option>)}</select></div>
-      <div className="field"><label>到货日期 *</label><input type="date" value={arrivalDate} onChange={(event) => setArrivalDate(event.target.value)} required/></div>
-      <div className="field"><label>供应商</label><select value={supplierId} onChange={(event) => setSupplierId(event.target.value)}><option value="">未指定</option>{suppliers.map((supplier) => <option key={supplier.id} value={supplier.id}>{supplier.name}</option>)}</select></div>
-      <div className="field"><label>供应商单号</label><input value={supplierReference} onChange={(event) => setSupplierReference(event.target.value)} placeholder="例如：SUP-20260801-01" maxLength={80}/></div>
-      <div className="field"><label>备注（选填）</label><input value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="例如：早班到货" maxLength={500}/></div>
     </section>
 
-    <section className="form-card">
-      <div className="panel-head" style={{ padding: 0, marginBottom: 14 }}><div><h2>颜色、尺码与数量</h2><p>同一款号的每个颜色和尺码组合单独一行</p></div><span className="status success">{lines.length} 行 SKU</span></div>
-      <div className="form-actions" style={{ margin: "0 0 14px", justifyContent: "space-between" }}>
-        <div className="field" style={{ flex: "1 1 220px", margin: 0 }}><label>搜索颜色</label><input value={colorSearch} onChange={(event) => setColorSearch(event.target.value)} placeholder="输入：牛仔蓝、咖啡、绿色…"/></div>
-        <button type="button" className="button" onClick={() => setShowNewColor((value) => !value)}>{showNewColor ? <X size={15}/> : <Palette size={15}/>} {showNewColor ? "取消新增" : "没有这个颜色？新增"}</button>
-      </div>
+    <section className="form-card fast-lines-card">
+      <div className="fast-lines-head"><h2>颜色与数量</h2><button type="button" className="button small" onClick={() => setShowNewColor((value) => !value)}>{showNewColor ? <X size={15}/> : <Palette size={15}/>} {showNewColor ? "取消" : "新增颜色"}</button></div>
 
-      {showNewColor && <div className="notice" style={{ marginBottom: 16 }}><div className="panel-head" style={{ padding: 0, marginBottom: 12 }}><div><h2>新增颜色</h2><p>新增后会立即出现在当前入库颜色列表，也会保留给以后使用。</p></div></div><div className="form-grid"><div className="field"><label>颜色名称 *</label><input value={newColor.name} onChange={(event) => setNewColor({ ...newColor, name: event.target.value })} placeholder="例如：牛油果绿" maxLength={30}/></div><div className="field"><label>颜色代码（选填）</label><input value={newColor.code} onChange={(event) => setNewColor({ ...newColor, code: event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8) })} placeholder="不填则自动生成" autoCapitalize="characters"/><div className="field-help">用于 SKU，只能输入 2–8 位英文字母或数字。</div></div><div className="field"><label>颜色参考</label><div style={{ display: "flex", gap: 8 }}><input type="color" value={newColor.hex} onChange={(event) => setNewColor({ ...newColor, hex: event.target.value.toUpperCase() })} style={{ width: 58, padding: 4 }}/><input value={newColor.hex} onChange={(event) => setNewColor({ ...newColor, hex: event.target.value.toUpperCase() })} maxLength={7}/></div></div></div><button type="button" className="button primary" disabled={creatingColor} onClick={() => void createColor()}>{creatingColor && <LoaderCircle size={15}/>}保存并选中这个颜色</button></div>}
+      {showNewColor && <div className="notice fast-new-color"><div className="form-grid"><div className="field"><label>颜色名称</label><input value={newColor.name} onChange={(event) => setNewColor({ ...newColor, name: event.target.value })} placeholder="例如 牛油果绿" maxLength={30}/></div><div className="field"><label>颜色代码</label><input value={newColor.code} onChange={(event) => setNewColor({ ...newColor, code: event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8) })} placeholder="自动生成" autoCapitalize="characters"/></div><div className="field"><label>颜色参考</label><div className="fast-color-picker"><input type="color" value={newColor.hex} onChange={(event) => setNewColor({ ...newColor, hex: event.target.value.toUpperCase() })}/><input value={newColor.hex} onChange={(event) => setNewColor({ ...newColor, hex: event.target.value.toUpperCase() })} maxLength={7}/></div></div></div><button type="button" className="button primary" disabled={creatingColor} onClick={() => void createColor()}>{creatingColor && <LoaderCircle size={15}/>}保存颜色</button></div>}
 
       <div className="fast-color-list">{lines.map((line, index) => {
         const selected = colors.find((item) => item.id === line.colorId);
-        const term = colorSearch.trim().toLowerCase();
-        const options = colors.filter((color) => color.id === line.colorId || !term || `${getColorDisplayName(color)} ${color.name_zh ?? ""} ${color.name} ${color.code ?? ""}`.toLowerCase().includes(term));
         return <div className="fast-color-row" key={line.key}>
           <span className="fast-color-index">{index + 1}</span>
-          <div className="field"><label>颜色 *</label><select value={line.colorId} onChange={(event) => updateLine(line.key, "colorId", event.target.value)}><option value="">选择颜色</option>{options.map((color) => <option key={color.id} value={color.id}>{getColorDisplayName(color)} · {color.code}</option>)}</select></div>
-          <div className="field"><label>尺码 *</label><select value={line.sizeId} onChange={(event) => updateLine(line.key, "sizeId", event.target.value)}><option value="">选择尺码</option>{sizes.map((size) => <option key={size.id} value={size.id}>{size.name}</option>)}</select></div>
-          <div className="field"><label>数量 *</label><input type="number" inputMode="numeric" min="1" max="99999" value={line.quantity} onChange={(event) => updateLine(line.key, "quantity", event.target.value)} placeholder="18"/></div>
+          <div className="field"><label>颜色</label><select value={line.colorId} onChange={(event) => updateLine(line.key, "colorId", event.target.value)}><option value="">请选择</option>{colors.map((color) => <option key={color.id} value={color.id}>{getColorDisplayName(color)} · {color.code}</option>)}</select></div>
+          <div className="field"><label>尺码</label><select value={line.sizeId} onChange={(event) => updateLine(line.key, "sizeId", event.target.value)}><option value="">请选择</option>{sizes.map((size) => <option key={size.id} value={size.id}>{size.name}</option>)}</select></div>
+          <div className="field"><label>数量</label><input type="number" inputMode="numeric" min="1" max="99999" value={line.quantity} onChange={(event) => updateLine(line.key, "quantity", event.target.value)} placeholder="0"/></div>
           <div className="fast-sku-preview"><span>SKU 预览</span><strong>{normalizeModelNumber(modelNumber) || "款号"}{selected?.code ? `-${selected.code}` : "-颜色"}-{sizes.find((size) => size.id === line.sizeId)?.normalized_name ?? "尺码"}</strong></div>
           <button type="button" className="icon-btn danger-icon" aria-label={`删除第${index + 1}种颜色`} disabled={lines.length === 1} onClick={() => setLines((current) => current.filter((item) => item.key !== line.key))}><Trash2 size={16}/></button>
         </div>;
       })}</div>
 
-      <div className="form-actions" style={{ justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" }}><div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}><button type="button" className="button" onClick={() => addLine()}><Plus size={15}/>添加颜色或尺码</button><span className="muted" style={{ fontSize: 11 }}>重复款色尺码会自动合并数量</span></div><div style={{ textAlign: "right" }}><p className="muted" style={{ fontSize: 11, marginBottom: 7 }}>{summary.items.length} 个 SKU · 共 {summary.total} 件</p><button type="button" className="button primary" disabled={loading || saving || Boolean(summary.error)} onClick={() => void confirm()}>{saving && <LoaderCircle size={15}/>}确认入库</button></div></div>
-      <label className="muted" style={{ display: "inline-flex", gap: 7, alignItems: "center", fontSize: 11, marginTop: 12 }}><input type="checkbox" checked={keepModel} onChange={(event) => setKeepModel(event.target.checked)}/> 完成后继续保留这个款号</label>
+      <button type="button" className="fast-add-line" onClick={() => addLine()}><Plus size={15}/>再加一行</button>
+
+      <details className="fast-inbound-more"><summary>更多信息</summary><div className="fast-more-grid"><div className="field"><label>到货日期</label><input type="date" value={arrivalDate} onChange={(event) => setArrivalDate(event.target.value)} required/></div><div className="field"><label>供应商</label><select value={supplierId} onChange={(event) => setSupplierId(event.target.value)}><option value="">未指定</option>{suppliers.map((supplier) => <option key={supplier.id} value={supplier.id}>{supplier.name}</option>)}</select></div><div className="field"><label>供应商单号</label><input value={supplierReference} onChange={(event) => setSupplierReference(event.target.value)} placeholder="选填" maxLength={80}/></div><div className="field"><label>备注</label><input value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="选填" maxLength={500}/></div><label className="fast-keep-model"><input type="checkbox" checked={keepModel} onChange={(event) => setKeepModel(event.target.checked)}/> 连续录入时保留款号</label></div></details>
+
+      <div className="fast-confirm-bar"><span><b>{summary.total}</b> 件 · {summary.items.length} 个 SKU</span><button type="button" className="button primary" disabled={loading || saving || Boolean(summary.error) || !summary.items.length} onClick={() => void confirm()}>{saving && <LoaderCircle size={15}/>}确认入库</button></div>
       {summary.error && <div className="notice warning">{summary.error}</div>}
     </section>
   </main>;

@@ -40,9 +40,9 @@ const nav = {
   warehouse: [
     { section: "入库", links: [
       { href: "/warehouse", label: "首页", icon: Home },
+      { href: "/inbound/new", label: "快速入库", icon: PlusCircle },
       { href: "/warehouse/receipts/new", label: "到货单", icon: ClipboardCheck },
       { href: "/warehouse/receipts", label: "入库记录", icon: ClipboardCheck },
-      { href: "/inbound/new", label: "快速入库", icon: Boxes },
     ] },
     { section: "仓库", links: [
       { href: "/warehouse/inventory", label: "库存", icon: Boxes },
@@ -91,7 +91,7 @@ export function AppShell({ portal, title, children }: { portal: Portal; title: s
   const mobileLinks = portal === "warehouse"
     ? [
       { href: "/warehouse", label: "首页", icon: Home },
-      { href: "/warehouse/receipts/new", label: "到货", icon: PlusCircle },
+      { href: "/inbound/new", label: "快速入库", icon: PlusCircle },
       { href: "/warehouse/receipts", label: "入库记录", icon: ClipboardList },
       { href: "/warehouse/inventory", label: "库存", icon: Boxes },
     ]

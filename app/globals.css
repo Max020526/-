@@ -276,3 +276,67 @@ small{font-size:13px!important;line-height:1.5}
   .mobile-drawer-foot .user-mini span{color:var(--muted)}
   @keyframes nexora-drawer-in{from{transform:translateX(100%);opacity:.7}to{transform:translateX(0);opacity:1}}
 }
+
+/* Compact warehouse workflow and orderly admin layouts. */
+.warehouse-primary-actions{display:grid;grid-template-columns:minmax(280px,1.5fr) minmax(180px,.5fr);gap:12px;margin-bottom:14px}
+.warehouse-quick-entry,.warehouse-secondary-entry{display:flex;align-items:center;border:1px solid var(--line);border-radius:16px;background:#fff}
+.warehouse-quick-entry{min-height:84px;gap:14px;padding:15px 18px;border-color:rgba(217,76,92,.26);box-shadow:0 10px 28px rgba(217,76,92,.09)}
+.warehouse-quick-entry>span{width:46px;height:46px;display:grid;place-items:center;border-radius:14px;background:#fff0f2;color:var(--brand)}
+.warehouse-quick-entry>div{display:grid;gap:3px;flex:1}.warehouse-quick-entry strong{font-size:19px}.warehouse-quick-entry small{color:var(--muted)}
+.warehouse-quick-entry>svg{color:var(--brand)}
+.warehouse-secondary-entry{justify-content:center;gap:9px;padding:14px;color:var(--brand-2);font-weight:700}
+.warehouse-stats{margin-bottom:14px}
+.warehouse-secondary-stat>.stat-card{height:100%}
+.warehouse-recent .empty{min-height:150px;padding:22px}
+
+.fast-inbound-page{max-width:1180px}
+.fast-primary-card{margin-bottom:12px}
+.fast-lines-card{padding:18px}
+.fast-lines-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.fast-lines-head h2{margin:0;font-size:18px}
+.fast-new-color{margin:0 0 12px}.fast-new-color .form-grid{grid-template-columns:1fr 1fr 1fr;margin-bottom:10px}
+.fast-color-picker{display:grid;grid-template-columns:52px 1fr;gap:7px}.fast-color-picker input[type="color"]{padding:3px}
+.fast-add-line{width:100%;min-height:42px;margin-top:9px;border:1px dashed #cbd2dc;border-radius:11px;background:#fafbfc;color:var(--brand-2);font-weight:700}
+.fast-inbound-more{margin-top:10px;border:1px solid var(--line);border-radius:11px;background:#fafbfc}
+.fast-inbound-more summary{padding:11px 13px;cursor:pointer;color:var(--brand-2);font-size:13px;font-weight:700}
+.fast-more-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding:0 13px 13px}
+.fast-keep-model{grid-column:1/-1;display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px}
+.fast-confirm-bar{display:flex;align-items:center;justify-content:flex-end;gap:16px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}
+.fast-confirm-bar span{margin-right:auto;color:var(--muted);font-size:13px}.fast-confirm-bar b{color:var(--ink);font-size:20px}
+.product-filter-card{margin-bottom:16px}.product-queue-tabs{margin-bottom:15px}
+.product-filter-grid{display:grid;grid-template-columns:2fr repeat(3,minmax(140px,1fr));gap:14px}
+.order-filters{padding:16px}
+
+@media(max-width:680px){
+  .admin-page,.warehouse-home{padding:14px 14px calc(82px + env(safe-area-inset-bottom))}
+  .admin-page .page-head,.warehouse-home .page-head{min-height:38px;margin-bottom:12px;flex-direction:row;align-items:center}
+  .admin-page .page-head .button{width:auto;min-height:38px;padding:7px 13px}
+  .warehouse-primary-actions{grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-bottom:10px}
+  .warehouse-quick-entry{min-height:68px;gap:10px;padding:10px 12px;border-radius:14px}
+  .warehouse-quick-entry>span{width:42px;height:42px;border-radius:12px}.warehouse-quick-entry strong{font-size:17px}.warehouse-quick-entry small{font-size:12px!important}
+  .warehouse-secondary-entry{width:112px;padding:9px;font-size:13px;text-align:center}
+  .warehouse-stats{gap:8px;margin-bottom:10px}.warehouse-stats .stat-card{min-height:92px;padding:11px 12px}.warehouse-stats .stat-icon{width:32px;height:32px}.warehouse-stats .stat-value{margin-top:6px;font-size:26px}
+  .warehouse-secondary-stat{display:none}
+  .warehouse-recent .panel-head{min-height:50px;padding:10px 12px}.warehouse-recent .empty{min-height:112px;padding:14px}.warehouse-recent .empty-icon{width:38px;height:38px;margin-bottom:8px}
+  .warehouse-recent .data-table{min-width:520px}
+
+  .fast-inbound-page{padding:10px 12px calc(78px + env(safe-area-inset-bottom))}
+  .fast-inbound-page .page-head{min-height:34px;margin-bottom:8px;flex-direction:row;align-items:center}.fast-inbound-page .page-title{font-size:23px}
+  .fast-inbound-page>.notice{margin:0 0 8px;padding:8px 10px}
+  .fast-primary-card{grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:8px;padding:11px;margin-bottom:8px;border-radius:13px}
+  .fast-primary-card .field label,.fast-lines-card .field label{margin-bottom:4px;font-size:12px}
+  .fast-primary-card .field input,.fast-primary-card .field select,.fast-lines-card .field input,.fast-lines-card .field select{min-height:40px;padding:7px 9px;font-size:14px}
+  .fast-lines-card{padding:11px;border-radius:13px}.fast-lines-head{margin-bottom:8px}.fast-lines-head h2{font-size:16px}.fast-lines-head .button{min-height:36px;padding:6px 9px;font-size:12px}
+  .fast-color-list{gap:7px}.fast-color-row{grid-template-columns:minmax(0,1fr) 74px 60px 34px;gap:6px;padding:8px;border-radius:11px;align-items:end}
+  .fast-color-index,.fast-sku-preview{display:none}.fast-color-row .field:nth-of-type(3){grid-column:auto}.fast-color-row .icon-btn{width:34px;min-height:40px;height:40px;border-radius:9px}
+  .fast-add-line{min-height:36px;margin-top:7px;font-size:12px}
+  .fast-inbound-more{margin-top:7px}.fast-inbound-more summary{padding:8px 10px;font-size:12px}
+  .fast-more-grid{grid-template-columns:1fr 1fr;gap:8px;padding:0 10px 10px}.fast-keep-model{grid-column:1/-1;font-size:12px}
+  .fast-confirm-bar{gap:10px;margin-top:8px;padding-top:8px}.fast-confirm-bar span{font-size:12px}.fast-confirm-bar b{font-size:18px}.fast-confirm-bar .button{min-height:42px;padding:8px 18px}
+  .fast-new-color{padding:10px}.fast-new-color .form-grid{grid-template-columns:1fr 1fr}.fast-new-color .field:last-child{grid-column:1/-1}.fast-new-color .button{width:100%}
+
+  .product-filter-card{padding:12px;margin-bottom:12px}.product-queue-tabs{margin-bottom:10px}.product-queue-tabs .tab{padding:8px 10px}
+  .product-filter-grid{grid-template-columns:1fr 1fr;gap:9px}.product-search-field,.product-filter-grid>.field:last-child{grid-column:1/-1}
+  .order-filters{grid-template-columns:minmax(0,1fr) auto;gap:10px;padding:12px;margin-bottom:12px}.order-filters label:first-child{grid-column:1/-1}.order-filters .button{align-self:end;padding-inline:18px}
+  .admin-page .empty{min-height:170px;padding:24px 16px}
+}
