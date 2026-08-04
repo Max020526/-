@@ -11,6 +11,9 @@ export function PermissionDiagnostics({ authorization, failedPermission }: { aut
         role: authorization?.role ?? null,
         permissions: authorization?.permissions ?? [],
         warehouseIds: authorization?.warehouseIds ?? [],
+        warehouseScope: authorization?.warehouseScope ?? "none",
+        categoryIds: authorization?.categoryIds ?? [],
+        categoryScope: authorization?.categoryScope ?? "none",
         failedPermission,
       }, null, 2)}
     </pre>
