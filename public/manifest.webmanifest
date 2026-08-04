@@ -9,8 +9,8 @@
   "display": "standalone",
   "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
   "orientation": "any",
-  "background_color": "#f5f7f4",
-  "theme_color": "#13251e",
+  "background_color": "#f7f8fb",
+  "theme_color": "#1b2433",
   "categories": ["business", "productivity", "shopping"],
   "icons": [
     {
