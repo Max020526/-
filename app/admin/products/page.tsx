@@ -101,7 +101,7 @@ export default function ProductOperationsPage() {
   }
 
   return <main className="page">
-    <PageHead eyebrow="PRODUCT OPERATIONS" title="商品运营工作台" subtitle="统一处理商品草稿、资料完善、SKU、媒体、渠道价格和发布。库存数量仅在库存与入库模块变化。" action={<Link className="button primary" href="/admin/products/new"><Plus size={15}/>创建商品草稿</Link>}/>
+    <PageHead eyebrow="" title="商品" subtitle="" action={<Link className="button primary" href="/admin/products/new"><Plus size={15}/>新建商品</Link>}/>
     <SetupBanner/>
     {message && <div className={message.includes("失败") || message.includes("请先") ? "notice warning" : "notice"}>{message}</div>}
     <section className="form-card" style={{ marginBottom: 16 }}>
