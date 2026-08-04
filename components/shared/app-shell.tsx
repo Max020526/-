@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   Boxes,
-  ChevronRight,
   CircleDollarSign,
   ClipboardCheck,
   ClipboardList,
@@ -40,40 +39,40 @@ const NAV_PERMISSIONS: Record<string,string> = {
 
 const nav = {
   warehouse: [
-    { section: "P01 · 入库作业", links: [
+    { section: "入库", links: [
       { href: "/warehouse", label: "作业首页", icon: Home },
       { href: "/warehouse/receipts/new", label: "新建到货单", icon: PackageCheck },
-      { href: "/warehouse/receipts", label: "统一入库记录", icon: ClipboardCheck },
-      { href: "/inbound/new", label: "经理快速过账", icon: PlusCircle },
+      { href: "/warehouse/receipts", label: "入库记录", icon: ClipboardCheck },
+      { href: "/inbound/new", label: "快速入库", icon: PlusCircle },
     ] },
     { section: "仓库与门店", links: [
-      { href: "/warehouse/inventory", label: "库存查询与盘点", icon: Boxes },
-      { href: "/warehouse/fulfillment", label: "P04 · 履约作业", icon: Truck },
-      { href: "/warehouse/pos", label: "P08 · 门店 POS", icon: Store },
+      { href: "/warehouse/inventory", label: "库存盘点", icon: Boxes },
+      { href: "/warehouse/fulfillment", label: "履约作业", icon: Truck },
+      { href: "/warehouse/pos", label: "门店 POS", icon: Store },
     ] },
     { section: "产品入口", links: [
-      { href: "/", label: "返回主页 · 切换产品", icon: Menu },
-      { href: RETAIL_STOREFRONT_URL, label: "打开零售顾客网站", icon: ExternalLink, external: true },
+      { href: "/", label: "切换工作区", icon: Menu },
+      { href: RETAIL_STOREFRONT_URL, label: "顾客商城", icon: ExternalLink, external: true },
     ] },
   ],
   admin: [
     { section: "经营与交易", links: [
-      { href: "/admin", label: "P07 · 老板经营", icon: LayoutDashboard },
-      { href: "/admin/orders", label: "P03 · 订单与客服", icon: ShoppingBag },
+      { href: "/admin", label: "经营首页", icon: LayoutDashboard },
+      { href: "/admin/orders", label: "订单管理", icon: ShoppingBag },
       { href: "/admin/returns", label: "退货退款", icon: ClipboardCheck },
     ] },
     { section: "商品与库存", links: [
-      { href: "/admin/products", label: "P02 · 商品运营", icon: Boxes },
+      { href: "/admin/products", label: "商品管理", icon: Boxes },
       { href: "/admin/products/new", label: "创建商品草稿", icon: PlusCircle },
       { href: "/admin/products?queue=enriching", label: "资料完善队列", icon: PackageCheck },
       { href: "/admin/products?queue=ready", label: "待发布队列", icon: Send },
       { href: "/admin/inventory", label: "库存监管", icon: ClipboardList },
     ] },
     { section: "采购与财务", links: [
-      { href: "/admin/purchasing", label: "P05 · 采购管理", icon: Truck },
-      { href: "/admin/finance", label: "P06 · 财务对账", icon: CircleDollarSign },
+      { href: "/admin/purchasing", label: "采购管理", icon: Truck },
+      { href: "/admin/finance", label: "财务对账", icon: CircleDollarSign },
     ] },
-    { section: "P09 · 系统管理", links: [
+    { section: "系统", links: [
       { href: "/settings/colors", label: "颜色管理", icon: Palette },
       { href: "/settings/categories", label: "分类管理", icon: Tags },
       { href: "/settings/suppliers", label: "供应商管理", icon: Settings },
@@ -81,8 +80,8 @@ const nav = {
       { href: "/settings/audit", label: "操作日志", icon: ShieldCheck },
     ] },
     { section: "产品入口", links: [
-      { href: "/", label: "返回主页 · 切换产品", icon: Menu },
-      { href: RETAIL_STOREFRONT_URL, label: "打开零售顾客网站", icon: ExternalLink, external: true },
+      { href: "/", label: "切换工作区", icon: Menu },
+      { href: RETAIL_STOREFRONT_URL, label: "顾客商城", icon: ExternalLink, external: true },
     ] },
   ],
 };
@@ -120,7 +119,7 @@ export function AppShell({ portal, title, children }: { portal: Portal; title: s
       <div className="sidebar-foot"><CurrentUser /></div>
     </aside>
     <div className="app-main">
-      <header className="topbar"><span className="topbar-title">{title}</span><ChevronRight size={14} color="#a1aaa5" /><span className="muted" style={{ fontSize: 11 }}>{new Intl.DateTimeFormat("zh-CN", { year: "numeric", month: "long", day: "numeric" }).format(new Date())}</span><div className="topbar-actions"><Link className="button small" href="/"><Menu size={14} />返回主页 · 切换产品</Link></div></header>
+      <header className="topbar"><span className="topbar-title">{title}</span><div className="topbar-actions"><Link className="button small" href="/"><Menu size={15} />切换工作区</Link></div></header>
       {children}
     </div>
     <nav className="mobile-nav">{mobileLinks.filter(({href})=>visible(href)).map(({ href, label, icon: Icon }) => <Link key={href} className={active(pathname, href) ? "active" : ""} href={href}><Icon size={19} /><span>{label}</span></Link>)}</nav>
