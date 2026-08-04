@@ -25,13 +25,13 @@ export default function EmployeeRegisterPage(){
     }catch{setError("账号创建服务暂时不可用，请稍后重试。");setBusy(false);}}
   return <main className="employee-register-page"><section className="employee-register-card">
     <Link href="/" className="employee-register-brand"><span className="brand-mark">N</span><strong>NEXORA</strong></Link>
-    {loading?<div className="invite-state"><LoaderCircle className="spin" size={34}/><h1>正在验证邀请…</h1><p>正在安全确认岗位、仓库和有效期。</p></div>:
-    success?<div className="invite-state"><CheckCircle2 size={42} color="#17633f"/><h1>员工账号创建成功</h1><p>岗位、权限和仓库范围已绑定，可立即登录。</p><Link className="button primary" href="/login">前往登录</Link></div>:
+    {loading?<div className="invite-state"><LoaderCircle className="spin" size={34}/><h1>正在验证邀请…</h1></div>:
+    success?<div className="invite-state"><CheckCircle2 size={42} color="var(--brand)"/><h1>账号创建成功</h1><Link className="button primary" href="/login">立即登录</Link></div>:
     !invitation?<div className="invite-state"><ShieldCheck size={38}/><h1>邀请链接无效</h1><p className="notice">{error}</p><Link className="button" href="/login">返回登录</Link></div>:
-    <><div className="invite-heading"><span>员工账号注册</span><h1>欢迎加入 NEXORA</h1><p>岗位与数据范围由管理员配置，注册后不能自行修改。</p></div>
+    <><div className="invite-heading"><h1>员工账号注册</h1></div>
       <dl className="invite-summary"><div><dt>岗位</dt><dd>{invitation.roleName}</dd></div><div><dt>邮箱</dt><dd>{invitation.email}</dd></div><div><dt>仓库</dt><dd>{invitation.warehouseName}</dd></div><div><dt>邀请有效期</dt><dd>{new Date(invitation.expiresAt).toLocaleString("zh-CN")}</dd></div></dl>
       <form onSubmit={submit} className="invite-form"><label><span>姓名</span><input required maxLength={100} autoComplete="name" value={form.name} onChange={(e)=>setForm({...form,name:e.target.value})}/></label>
-        <label><span>密码</span><input required minLength={12} maxLength={128} type="password" autoComplete="new-password" value={form.password} onChange={(e)=>setForm({...form,password:e.target.value})}/><small>至少 12 位</small></label>
+        <label><span>密码（至少 12 位）</span><input required minLength={12} maxLength={128} type="password" autoComplete="new-password" value={form.password} onChange={(e)=>setForm({...form,password:e.target.value})}/></label>
         <label><span>确认密码</span><input required minLength={12} maxLength={128} type="password" autoComplete="new-password" value={form.confirmPassword} onChange={(e)=>setForm({...form,confirmPassword:e.target.value})}/></label>
         {error&&<p className="notice">{error}</p>}<button className="button primary" disabled={busy}>{busy?<LoaderCircle className="spin" size={16}/>:<ShieldCheck size={16}/>} {busy?"正在创建账号…":"创建员工账号"}</button>
       </form></>}
