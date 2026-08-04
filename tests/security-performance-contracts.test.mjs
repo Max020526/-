@@ -99,10 +99,12 @@ test("quick inbound uses canonical permissions and explicit warehouse scope", as
 
 test("warehouse and admin mobile navigation remain separate and can switch portals", async () => {
   const shell = await source("components/shared/app-shell.tsx");
-  assert.match(shell, /切换工作区/);
-  assert.match(shell, /href: "\/warehouse\/receipts\/new", label: "新建到货单"/);
+  assert.match(shell, /label: "工作区"/);
+  assert.match(shell, /href: "\/warehouse\/receipts\/new", label: "到货单"/);
   assert.match(shell, /href: "\/inbound\/new", label: "快速入库"/);
   assert.match(shell, /href: "\/admin\/orders", label: "订单"/);
+  assert.match(shell, /activeHref/);
+  assert.match(shell, /sort\(\(a,b\)=>b\.length-a\.length\)/);
 });
 
 test("the install prompt never covers login or port selection", async () => {
@@ -113,9 +115,10 @@ test("the install prompt never covers login or port selection", async () => {
 
 test("frontend products have one source of truth and legacy surfaces only redirect", async () => {
   const workspaces = await source("lib/workspaces.ts");
-  for (const product of ["warehouse-pos", "internal-admin", "retail-storefront", "b2b-portal"]) {
+  for (const product of ["warehouse-pos", "internal-admin", "retail-storefront"]) {
     assert.match(workspaces, new RegExp(product));
   }
+  assert.doesNotMatch(workspaces, /b2b-portal|批发客户门户/);
   const receiptLedger = await source("app/warehouse/receipts/page.tsx");
   assert.match(receiptLedger, /from\("inbound_receipts"\)/);
   assert.doesNotMatch(receiptLedger, /from\("inbound_orders"\)/);
@@ -129,4 +132,12 @@ test("frontend products have one source of truth and legacy surfaces only redire
     assert.match(contents, /redirect\(RETAIL_STOREFRONT_URL\)/, route);
     assert.doesNotMatch(contents, /from\("shopping_|from\("orders"|from\("online_listings"/, route);
   }
+});
+
+test("staff permission editor only exposes enabled Chinese permission labels", async () => {
+  const users = await source("app/settings/users/page.tsx");
+  assert.match(users, /ENABLED_PERMISSION_CODES/);
+  assert.match(users, /PERMISSION_LABELS/);
+  assert.match(users, /permissionGroups/);
+  assert.doesNotMatch(users, /<small>\{p\.code\}<\/small>/);
 });
