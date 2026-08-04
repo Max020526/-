@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
-import { ArrowRight, Download, PackageCheck, Plus } from "lucide-react";
+import { ArrowRight, Download } from "lucide-react";
 import { PageHead } from "@/components/shared/page-head";
 import { SetupBanner } from "@/components/shared/setup-banner";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -94,16 +94,14 @@ export default function Receipts() {
 
   return <main className="page">
     <PageHead
-      eyebrow="P01 · UNIFIED INBOUND LEDGER"
+      eyebrow=""
       title="入库记录"
-      subtitle="快速过账与标准到货单共用一个查询入口、一个统计口径和同一套库存流水。"
+      subtitle=""
       action={<div className="page-actions">
         <button className={`button ${todayOnly ? "primary" : ""}`} onClick={() => setTodayOnly((value) => !value)}>
           {todayOnly ? "显示全部" : "只看今天"}
         </button>
         <button className="button" onClick={exportRows} disabled={!visible.length}><Download size={15} />导出</button>
-        <Link className="button" href="/inbound/new"><Plus size={15} />快速入库</Link>
-        <Link className="button primary" href="/warehouse/receipts/new"><PackageCheck size={15} />新建到货单</Link>
       </div>}
     />
     <SetupBanner />
@@ -120,7 +118,7 @@ export default function Receipts() {
         </tr>)}</tbody>
       </table></div> : <EmptyState
         title={loading ? "正在读取入库记录" : todayOnly ? "今天暂无入库记录" : "暂无入库记录"}
-        description={loading ? "请稍候。" : "仓库员工可以先新建到货单，再完成点货、提交和审核入库。"}
+        description={loading ? "请稍候。" : ""}
       />}
     </section>
   </main>;
