@@ -95,29 +95,25 @@ export default function Receipts() {
   return <main className="page">
     <PageHead
       eyebrow="P01 · UNIFIED INBOUND LEDGER"
-      title="统一入库记录"
+      title="入库记录"
       subtitle="快速过账与标准到货单共用一个查询入口、一个统计口径和同一套库存流水。"
       action={<div className="page-actions">
         <button className={`button ${todayOnly ? "primary" : ""}`} onClick={() => setTodayOnly((value) => !value)}>
           {todayOnly ? "显示全部" : "只看今天"}
         </button>
         <button className="button" onClick={exportRows} disabled={!visible.length}><Download size={15} />导出</button>
-        <Link className="button" href="/inbound/new"><Plus size={15} />经理快速过账</Link>
+        <Link className="button" href="/inbound/new"><Plus size={15} />快速入库</Link>
         <Link className="button primary" href="/warehouse/receipts/new"><PackageCheck size={15} />新建到货单</Link>
       </div>}
     />
     <SetupBanner />
-    <div className="mode-explainer">
-      <div><b>标准到货单</b><span>仓库员工创建、点货并提交，仓库经理审核后一次过账。</span></div>
-      <div><b>经理快速过账</b><span>仅适用于已线下核对完成的型号、颜色、尺码和数量。</span></div>
-    </div>
     <section className="panel">
       {visible.length ? <div className="table-wrap"><table className="data-table">
         <thead><tr><th>入库单号</th><th>日期 / 时间</th><th>模式</th><th>员工 / 供应商</th><th>仓库</th><th>货单 / 实收</th><th>状态</th><th></th></tr></thead>
         <tbody>{visible.map((row) => <tr key={`${row.source}-${row.id}`}>
           <td><strong>{row.number}</strong></td>
           <td>{row.businessDate}<small className="cell-subline">{new Date(row.createdAt).toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" })}</small></td>
-          <td><span className={`source-chip ${row.source}`}>{row.source === "quick" ? "快速过账" : "标准到货单"}</span></td>
+          <td><span className={`source-chip ${row.source}`}>{row.source === "quick" ? "快速入库" : "到货单"}</span></td>
           <td>{row.party}</td><td>{row.warehouse}</td><td>{row.expectedQuantity} / {row.receivedQuantity}</td>
           <td><StatusBadge value={row.status} label={row.statusLabel} /></td>
           <td><Link href={row.href} aria-label={`查看 ${row.number}`}><ArrowRight size={15} /></Link></td>
