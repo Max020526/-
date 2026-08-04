@@ -97,14 +97,27 @@ test("quick inbound uses canonical permissions and explicit warehouse scope", as
   }
 });
 
-test("warehouse and admin mobile navigation remain separate and can switch portals", async () => {
+test("mobile navigation exposes every permitted desktop function through the full menu", async () => {
   const shell = await source("components/shared/app-shell.tsx");
-  assert.match(shell, /label: "工作区"/);
   assert.match(shell, /href: "\/warehouse\/receipts\/new", label: "到货单"/);
   assert.match(shell, /href: "\/inbound\/new", label: "快速入库"/);
   assert.match(shell, /href: "\/admin\/orders", label: "订单"/);
+  assert.match(shell, /mobile-drawer-nav/);
+  assert.match(shell, /visibleGroups\.map/);
+  assert.match(shell, /aria-label="全部功能"/);
+  assert.match(shell, /切换工作区/);
   assert.match(shell, /activeHref/);
   assert.match(shell, /sort\(\(a,b\)=>b\.length-a\.length\)/);
+});
+
+test("NEXORA app colors and install metadata use the supplied brand palette", async () => {
+  const css = await source("app/globals.css");
+  const manifest = await source("public/manifest.webmanifest");
+  const favicon = await source("public/favicon.svg");
+  for (const color of ["#d94c5c", "#f29baa", "#a7b4c9", "#59728e"]) assert.match(css.toLowerCase(), new RegExp(color));
+  assert.match(manifest, /"theme_color": "#1b2433"/);
+  assert.match(favicon.toLowerCase(), /#d94c5c/);
+  assert.match(favicon.toLowerCase(), /#59728e/);
 });
 
 test("the install prompt never covers login or port selection", async () => {
