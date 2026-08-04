@@ -8,7 +8,6 @@ import { PageHead } from "@/components/shared/page-head";
 import { SetupBanner } from "@/components/shared/setup-banner";
 import { StatCard } from "@/components/shared/stat-card";
 import { StatusBadge } from "@/components/shared/status-badge";
-import { WorkflowStrip } from "@/components/shared/workflow-strip";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { ORDER_STATUS } from "@/lib/constants";
 import { adminWorkspaces, RETAIL_STOREFRONT_URL } from "@/lib/workspaces";
@@ -70,9 +69,8 @@ export default function AdminDashboard() {
   const maxRevenue = Math.max(1, ...data.trend.map((day) => day.revenue));
 
   return <main className="page">
-    <PageHead eyebrow="INTERNAL ADMIN" title="内部经营管理" subtitle="商品、订单、采购、财务、经营分析与系统设置按职责分区，共用同一套业务数据。" action={<Link className="button primary" href="/admin/products/new"><PackageCheck size={15}/>新建并上架商品</Link>}/>
+    <PageHead eyebrow="" title="经营工作台" subtitle="" action={<Link className="button primary" href="/admin/products/new"><PackageCheck size={15}/>新建商品</Link>}/>
     <SetupBanner/>
-    <WorkflowStrip title="核心经营流程" steps={["商品与价格", "渠道发布", "订单收款", "仓库履约", "售后与对账"]}/>
     <section className="workspace-grid" aria-label="内部管理工作区">{adminWorkspaces.map(({ code, title, description, href, status, icon: Icon }) => <Link className="workspace-card" href={href!} key={code}><span className="workspace-icon"><Icon size={19}/></span><div><small>{code} · {status === "available" ? "已启用" : "规划中"}</small><b>{title}</b><p>{description}</p></div><ArrowRight size={15}/></Link>)}</section>
     <section className="stats-grid">
       <StatCard label="今日入库件数" value={data.todayInbound} note={`${data.todayInboundOrders} 张统一入库单`} icon={Warehouse}/>
