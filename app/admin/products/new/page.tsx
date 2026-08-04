@@ -74,7 +74,7 @@ export default function NewProductDraftPage() {
   }
 
   return <main className="page">
-    <PageHead eyebrow="PRODUCT OPERATIONS" title="创建商品草稿" subtitle="这里只建立 SPU 主档，不写库存、不直接发布。颜色、尺码、图片、渠道价格将在商品详情中继续完善。" action={<Link className="button" href="/admin/products"><ArrowLeft size={15}/>返回商品运营</Link>}/>
+    <PageHead eyebrow="" title="新建商品" subtitle="" action={<Link className="button" href="/admin/products"><ArrowLeft size={15}/>返回商品</Link>}/>
     <SetupBanner/>
     {message && <div className="notice warning" role="alert">{message}</div>}
     <section className="form-card">
