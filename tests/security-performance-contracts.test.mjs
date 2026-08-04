@@ -99,9 +99,9 @@ test("quick inbound uses canonical permissions and explicit warehouse scope", as
 
 test("warehouse and admin mobile navigation remain separate and can switch portals", async () => {
   const shell = await source("components/shared/app-shell.tsx");
-  assert.match(shell, /返回主页 · 切换产品/);
+  assert.match(shell, /切换工作区/);
   assert.match(shell, /href: "\/warehouse\/receipts\/new", label: "新建到货单"/);
-  assert.match(shell, /href: "\/inbound\/new", label: "经理快速过账"/);
+  assert.match(shell, /href: "\/inbound\/new", label: "快速入库"/);
   assert.match(shell, /href: "\/admin\/orders", label: "订单"/);
 });
 
@@ -120,7 +120,7 @@ test("frontend products have one source of truth and legacy surfaces only redire
   assert.match(receiptLedger, /from\("inbound_receipts"\)/);
   assert.doesNotMatch(receiptLedger, /from\("inbound_orders"\)/);
   assert.doesNotMatch(receiptLedger, /from\("stock_receipts"\)/);
-  assert.match(receiptLedger, /统一入库记录/);
+  assert.match(receiptLedger, /title="入库记录"/);
   for (const route of ["app/inbound/today/page.tsx", "app/inventory/page.tsx", "app/catalog/page.tsx"]) {
     assert.match(await source(route), /redirect\(/, route);
   }

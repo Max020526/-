@@ -8,7 +8,6 @@ import { SetupBanner } from "@/components/shared/setup-banner";
 import { StatCard } from "@/components/shared/stat-card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { StatusBadge } from "@/components/shared/status-badge";
-import { WorkflowStrip } from "@/components/shared/workflow-strip";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { RECEIPT_STATUS } from "@/lib/constants";
 
@@ -44,18 +43,17 @@ export default function WarehouseHome() {
   const { data } = useSupabaseQuery<Dashboard>(query, EMPTY);
 
   return <main className="page">
-    <PageHead eyebrow="WAREHOUSE & POS PWA" title="仓库与门店作业" subtitle="员工入口只处理实物：收货、复核、履约、门店销售、库存查询和盘点。" action={<Link className="button primary" href="/warehouse/receipts/new"><Plus size={16} />新建到货单</Link>} />
+    <PageHead eyebrow="" title="仓库工作台" subtitle="" action={<Link className="button primary" href="/warehouse/receipts/new"><Plus size={16} />新建到货单</Link>} />
     <SetupBanner />
-    <WorkflowStrip title="P01 入库标准流程" steps={["选择入库模式", "录入或识别", "人工核对", "事务过账", "商品待完善"]} />
     <section className="stats-grid"><StatCard label="今日入库单" value={data.todayCount} note="两种入库模式统一统计" icon={PackageCheck} /><StatCard label="今日入库件数" value={data.todayQty} note="已确认及已完成数量" icon={Boxes} /><StatCard label="货单待处理" value={data.pending} note="需要继续识别或复核" icon={ClipboardList} /><StatCard label="异常入库单" value={data.exceptions} note="需要人工处理" icon={CircleAlert} /></section>
     <section className="content-grid">
       <div className="panel"><div className="panel-head"><div><h2>最近入库记录</h2><p>快速入库与 OCR/货单入库统一显示</p></div><Link className="panel-action button small" href="/warehouse/receipts">查看全部</Link></div>{data.receipts.length ? <div className="table-wrap"><table className="data-table"><thead><tr><th>入库单号</th><th>日期</th><th>模式</th><th>员工 / 供应商</th><th>件数</th><th>状态</th><th></th></tr></thead><tbody>{data.receipts.map((row) => <tr key={`${row.source}-${row.id}`}><td><strong>{row.number}</strong></td><td>{row.date}</td><td><span className={`source-chip ${row.source}`}>{row.source === "quick" ? "快速" : "货单"}</span></td><td>{row.party}</td><td>{row.quantity}</td><td><StatusBadge value={row.status} label={row.statusLabel} /></td><td><Link href={row.href}><ArrowRight size={15} /></Link></td></tr>)}</tbody></table></div> : <EmptyState title="还没有入库记录" description="可以快速录入款号、颜色和数量，或使用 OCR/货单模式完成分步收货。" />}</div>
-      <aside className="panel"><div className="panel-head"><div><h2>按工作选择入口</h2><p>每项工作只有一个标准入口</p></div></div><div className="panel-body quick-list">
-        <Link className="quick-link" href="/warehouse/receipts/new"><span className="quick-icon"><PackageCheck size={18} /></span><span><b>新建到货单</b><span>录入、粘贴或识别货单后分步复核与实收</span></span><ArrowRight size={15} /></Link>
-        <Link className="quick-link" href="/inbound/new"><span className="quick-icon"><Plus size={18} /></span><span><b>经理快速过账</b><span>一个型号批量录入多颜色、多尺码</span></span><ArrowRight size={15} /></Link>
-        <Link className="quick-link" href="/warehouse/inventory"><span className="quick-icon"><Search size={18} /></span><span><b>库存查询与盘点</b><span>按款号、SKU 或条形码查找</span></span><ArrowRight size={15} /></Link>
-        <Link className="quick-link" href="/warehouse/fulfillment"><span className="quick-icon"><Truck size={18} /></span><span><b>P04 履约作业</b><span>规划中：拣货、复核、打包、出库</span></span><ArrowRight size={15} /></Link>
-        <Link className="quick-link" href="/warehouse/pos"><span className="quick-icon"><Store size={18} /></span><span><b>P08 门店 POS</b><span>规划中：开单、收款、销售出库</span></span><ArrowRight size={15} /></Link>
+      <aside className="panel"><div className="panel-head"><div><h2>常用操作</h2></div></div><div className="panel-body quick-list">
+        <Link className="quick-link" href="/warehouse/receipts/new"><span className="quick-icon"><PackageCheck size={18} /></span><span><b>新建到货单</b></span><ArrowRight size={15} /></Link>
+        <Link className="quick-link" href="/inbound/new"><span className="quick-icon"><Plus size={18} /></span><span><b>快速入库</b></span><ArrowRight size={15} /></Link>
+        <Link className="quick-link" href="/warehouse/inventory"><span className="quick-icon"><Search size={18} /></span><span><b>库存盘点</b></span><ArrowRight size={15} /></Link>
+        <Link className="quick-link" href="/warehouse/fulfillment"><span className="quick-icon"><Truck size={18} /></span><span><b>履约作业</b></span><ArrowRight size={15} /></Link>
+        <Link className="quick-link" href="/warehouse/pos"><span className="quick-icon"><Store size={18} /></span><span><b>门店 POS</b></span><ArrowRight size={15} /></Link>
       </div></aside>
     </section>
   </main>;
