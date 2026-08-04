@@ -1,4 +1,4 @@
-const VERSION = "nexora-pwa-v6";
+const VERSION = "nexora-pwa-v7";
 const STATIC_CACHE = `${VERSION}-static`;
 const CORE_ASSETS = ["/offline", "/favicon.svg", "/app-icon-192.png", "/app-icon-512.png", "/manifest.webmanifest"];
 

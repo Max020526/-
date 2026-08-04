@@ -68,7 +68,7 @@ export default function AdminDashboard() {
   const { data } = useSupabaseQuery<Dashboard>(query, EMPTY);
   const maxRevenue = Math.max(1, ...data.trend.map((day) => day.revenue));
 
-  return <main className="page">
+  return <main className="page admin-page admin-dashboard">
     <PageHead eyebrow="" title="管理首页" subtitle="" action={<Link className="button primary" href="/admin/products/new"><PackageCheck size={15}/>新建商品</Link>}/>
     <SetupBanner/>
     <section className="stats-grid">

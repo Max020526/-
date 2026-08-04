@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback } from "react";
-import { ArrowRight, Boxes, CircleAlert, ClipboardList, PackageCheck } from "lucide-react";
+import { ArrowRight, Boxes, CircleAlert, ClipboardList, PackageCheck, Plus, Zap } from "lucide-react";
 import { PageHead } from "@/components/shared/page-head";
 import { SetupBanner } from "@/components/shared/setup-banner";
 import { StatCard } from "@/components/shared/stat-card";
@@ -42,10 +42,14 @@ export default function WarehouseHome() {
   }, []);
   const { data } = useSupabaseQuery<Dashboard>(query, EMPTY);
 
-  return <main className="page">
-    <PageHead eyebrow="" title="仓库首页" subtitle="" />
+  return <main className="page warehouse-home">
+    <PageHead eyebrow="" title="仓库" subtitle="" />
     <SetupBanner />
-    <section className="stats-grid"><StatCard label="今日入库单" value={data.todayCount} note="两种入库模式统一统计" icon={PackageCheck} /><StatCard label="今日入库件数" value={data.todayQty} note="已确认及已完成数量" icon={Boxes} /><StatCard label="货单待处理" value={data.pending} note="需要继续识别或复核" icon={ClipboardList} /><StatCard label="异常入库单" value={data.exceptions} note="需要人工处理" icon={CircleAlert} /></section>
-    <section className="panel"><div className="panel-head"><div><h2>最近入库</h2></div><Link className="panel-action button small" href="/warehouse/receipts">查看全部</Link></div>{data.receipts.length ? <div className="table-wrap"><table className="data-table"><thead><tr><th>入库单号</th><th>日期</th><th>模式</th><th>员工 / 供应商</th><th>件数</th><th>状态</th><th></th></tr></thead><tbody>{data.receipts.map((row) => <tr key={`${row.source}-${row.id}`}><td><strong>{row.number}</strong></td><td>{row.date}</td><td><span className={`source-chip ${row.source}`}>{row.source === "quick" ? "快速" : "货单"}</span></td><td>{row.party}</td><td>{row.quantity}</td><td><StatusBadge value={row.status} label={row.statusLabel} /></td><td><Link href={row.href}><ArrowRight size={15} /></Link></td></tr>)}</tbody></table></div> : <EmptyState title="暂无入库记录" description="" />}</section>
+    <section className="warehouse-primary-actions">
+      <Link className="warehouse-quick-entry" href="/inbound/new"><span><Zap size={23}/></span><div><strong>快速入库</strong><small>款号、颜色、数量</small></div><ArrowRight size={20}/></Link>
+      <Link className="warehouse-secondary-entry" href="/warehouse/receipts/new"><Plus size={18}/><span>新建到货单</span></Link>
+    </section>
+    <section className="stats-grid warehouse-stats"><StatCard label="今日入库单" value={data.todayCount} icon={PackageCheck} /><StatCard label="今日入库件数" value={data.todayQty} icon={Boxes} /><div className="warehouse-secondary-stat"><StatCard label="货单待处理" value={data.pending} icon={ClipboardList} /></div><div className="warehouse-secondary-stat"><StatCard label="异常入库单" value={data.exceptions} icon={CircleAlert} /></div></section>
+    <section className="panel warehouse-recent"><div className="panel-head"><div><h2>最近入库</h2></div><Link className="panel-action button small" href="/warehouse/receipts">全部记录</Link></div>{data.receipts.length ? <div className="table-wrap"><table className="data-table"><thead><tr><th>入库单号</th><th>日期</th><th>模式</th><th>员工 / 供应商</th><th>件数</th><th>状态</th><th></th></tr></thead><tbody>{data.receipts.map((row) => <tr key={`${row.source}-${row.id}`}><td><strong>{row.number}</strong></td><td>{row.date}</td><td><span className={`source-chip ${row.source}`}>{row.source === "quick" ? "快速" : "货单"}</span></td><td>{row.party}</td><td>{row.quantity}</td><td><StatusBadge value={row.status} label={row.statusLabel} /></td><td><Link href={row.href}><ArrowRight size={15} /></Link></td></tr>)}</tbody></table></div> : <EmptyState title="暂无入库记录" description="" />}</section>
   </main>;
 }

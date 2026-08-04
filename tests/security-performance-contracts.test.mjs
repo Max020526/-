@@ -64,11 +64,13 @@ test("development diagnostics do not weaken the production content security poli
 
 test("quick inbound uses one model number with multiple color rows and custom colors", async () => {
   const page = await source("app/inbound/new/page.tsx");
-  assert.match(page, /一个款号可一次录入多种颜色/);
-  assert.match(page, /添加颜色或尺码/);
+  assert.match(page, /fast-primary-card/);
+  assert.match(page, /fast-inbound-more/);
+  assert.match(page, /再加一行/);
+  assert.match(page, /确认入库/);
   assert.match(page, /rpc_post_inbound_receipt/);
   assert.match(page, /create_inbound_color/);
-  assert.match(page, /没有这个颜色？新增/);
+  assert.match(page, /新增颜色/);
 });
 
 test("quick inbound uses canonical permissions and explicit warehouse scope", async () => {
@@ -108,6 +110,7 @@ test("mobile navigation exposes every permitted desktop function through the ful
   assert.match(shell, /切换工作区/);
   assert.match(shell, /activeHref/);
   assert.match(shell, /sort\(\(a,b\)=>b\.length-a\.length\)/);
+  assert.match(shell, /href: "\/inbound\/new", label: "快速入库", icon: PlusCircle/);
 });
 
 test("NEXORA app colors and install metadata use the supplied brand palette", async () => {
@@ -116,8 +119,20 @@ test("NEXORA app colors and install metadata use the supplied brand palette", as
   const favicon = await source("public/favicon.svg");
   for (const color of ["#d94c5c", "#f29baa", "#a7b4c9", "#59728e"]) assert.match(css.toLowerCase(), new RegExp(color));
   assert.match(manifest, /"theme_color": "#1b2433"/);
+  assert.match(manifest, /"purpose": "any maskable"/);
   assert.match(favicon.toLowerCase(), /#d94c5c/);
   assert.match(favicon.toLowerCase(), /#59728e/);
+});
+
+test("warehouse mobile workflow prioritizes a one-screen quick inbound form", async () => {
+  const home = await source("app/warehouse/page.tsx");
+  const inbound = await source("app/inbound/new/page.tsx");
+  const css = await source("app/globals.css");
+  assert.match(home, /warehouse-quick-entry[\s\S]*href="\/inbound\/new"/);
+  assert.match(inbound, /fast-primary-card[\s\S]*fast-lines-card[\s\S]*fast-confirm-bar/);
+  for (const className of ["warehouse-primary-actions", "fast-inbound-page", "product-filter-grid", "order-filters"]) {
+    assert.match(css, new RegExp(`\\.${className}`));
+  }
 });
 
 test("the install prompt never covers login or port selection", async () => {
@@ -128,7 +143,7 @@ test("the install prompt never covers login or port selection", async () => {
 
 test("PWA updates scripts and styles from the network before using cache", async () => {
   const worker = await source("public/sw.js");
-  assert.match(worker, /nexora-pwa-v6/);
+  assert.match(worker, /nexora-pwa-v7/);
   assert.match(worker, /\["style", "script"\][\s\S]*fetch\(request\)[\s\S]*catch\(\(\) => caches\.match\(request\)\)/);
 });
 

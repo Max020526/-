@@ -100,14 +100,14 @@ export default function ProductOperationsPage() {
     if (!error) { setSelected([]); void load(); }
   }
 
-  return <main className="page">
+  return <main className="page admin-page product-operations-page">
     <PageHead eyebrow="" title="商品" subtitle="" action={<Link className="button primary" href="/admin/products/new"><Plus size={15}/>新建商品</Link>}/>
     <SetupBanner/>
     {message && <div className={message.includes("失败") || message.includes("请先") ? "notice warning" : "notice"}>{message}</div>}
-    <section className="form-card" style={{ marginBottom: 16 }}>
-      <div className="tabs" style={{ marginBottom: 15 }}>{Object.entries(queueLabels).map(([value, label]) => <button key={value} className={`tab ${queue === value ? "active" : ""}`} onClick={() => setFilter(() => setQueue(value))}>{label}</button>)}</div>
-      <div className="form-grid" style={{ gridTemplateColumns: "2fr repeat(3,1fr)" }}>
-        <div className="field"><label><Search size={13}/>搜索型号或多语言名称</label><input value={search} onChange={(event) => setFilter(() => setSearch(event.target.value))} placeholder="NX-30283"/></div>
+    <section className="form-card product-filter-card">
+      <div className="tabs product-queue-tabs">{Object.entries(queueLabels).map(([value, label]) => <button key={value} className={`tab ${queue === value ? "active" : ""}`} onClick={() => setFilter(() => setQueue(value))}>{label}</button>)}</div>
+      <div className="product-filter-grid">
+        <div className="field product-search-field"><label><Search size={13}/>搜索商品</label><input value={search} onChange={(event) => setFilter(() => setSearch(event.target.value))} placeholder="型号或名称"/></div>
         <div className="field"><label>分类</label><select value={categoryId} onChange={(event) => setFilter(() => setCategoryId(event.target.value))}><option value="">全部分类</option>{categories.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></div>
         <div className="field"><label>品牌</label><select value={brandId} onChange={(event) => setFilter(() => setBrandId(event.target.value))}><option value="">全部品牌</option>{brands.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></div>
         <div className="field"><label>排序</label><select value={sort} onChange={(event) => setSort(event.target.value)}><option value="updated">最近更新</option><option value="created">最近创建</option><option value="style">商品型号</option></select></div>
