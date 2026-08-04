@@ -126,6 +126,12 @@ test("the install prompt never covers login or port selection", async () => {
   assert.match(installPrompt, /!visible \|\| !isInternalWorkspace/);
 });
 
+test("PWA updates scripts and styles from the network before using cache", async () => {
+  const worker = await source("public/sw.js");
+  assert.match(worker, /nexora-pwa-v6/);
+  assert.match(worker, /\["style", "script"\][\s\S]*fetch\(request\)[\s\S]*catch\(\(\) => caches\.match\(request\)\)/);
+});
+
 test("frontend products have one source of truth and legacy surfaces only redirect", async () => {
   const workspaces = await source("lib/workspaces.ts");
   for (const product of ["warehouse-pos", "internal-admin", "retail-storefront"]) {
