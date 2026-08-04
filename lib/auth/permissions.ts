@@ -8,6 +8,21 @@ export const PERMISSIONS = {
   receivingCreate: "receiving.create",
   receivingConfirm: "receiving.confirm",
   skuCreate: "sku.create",
+  receivingView: "receiving.view",
+  productView: "product.view",
+  productCreate: "product.create",
+  productEdit: "product.edit",
+  productPublish: "product.publish",
+  skuView: "sku.view",
+  skuEdit: "sku.edit",
+  orderView: "order.view",
+  orderProcess: "order.process",
+  financeView: "finance.view",
+  employeeView: "employee.view",
+  employeeCreate: "employee.create",
+  employeeEdit: "employee.edit",
+  settingsView: "system.settings.view",
+  auditView: "audit.view",
 } as const;
 
 export type PermissionKey = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -28,6 +43,10 @@ export type Authorization = {
   permissions: string[];
   warehouseIds: string[];
   allWarehouses: boolean;
+  warehouseScope: "all" | "selected" | "none";
+  categoryIds: string[];
+  allCategories: boolean;
+  categoryScope: "all" | "selected" | "none";
   isActive: boolean;
 };
 
@@ -58,6 +77,10 @@ export async function loadAuthorization(client: SupabaseClient<Database>): Promi
     permissions: stringArray(authorization.permissions),
     warehouseIds: stringArray(authorization.warehouse_ids),
     allWarehouses: authorization.all_warehouses === true,
+    warehouseScope: authorization.warehouse_scope === "all" || authorization.warehouse_scope === "selected" ? authorization.warehouse_scope : "none",
+    categoryIds: stringArray(authorization.category_ids),
+    allCategories: authorization.all_categories === true,
+    categoryScope: authorization.category_scope === "all" || authorization.category_scope === "selected" ? authorization.category_scope : "none",
     isActive: authorization.is_active === true,
   };
 }
