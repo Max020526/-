@@ -13,11 +13,10 @@ test("server-renders the NEXORA portal", async () => {
   assert.equal(response.status, 200);
   const html = await response.text();
   assert.match(html, /NEXORA/);
-  assert.match(html, /仓库与门店作业/);
-  assert.match(html, /内部经营管理/);
-  assert.match(html, /零售顾客网站/);
-  assert.match(html, /批发客户门户/);
-  assert.match(html, /P01 入库 · P04 履约 · P08 POS/);
+  assert.match(html, />仓库</);
+  assert.match(html, />管理</);
+  assert.match(html, />商城</);
+  assert.doesNotMatch(html, /批发客户门户|暂不启用/);
   assert.match(html, /https:\/\/nexora-studio-shop\.xrx020526\.chatgpt\.site/);
   assert.doesNotMatch(html, /codex-preview|Building your site/);
 });

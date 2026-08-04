@@ -10,7 +10,7 @@ import { StatCard } from "@/components/shared/stat-card";
 import { StatusBadge } from "@/components/shared/status-badge";
 import { useSupabaseQuery } from "@/hooks/use-supabase-query";
 import { ORDER_STATUS } from "@/lib/constants";
-import { adminWorkspaces, RETAIL_STOREFRONT_URL } from "@/lib/workspaces";
+import { RETAIL_STOREFRONT_URL } from "@/lib/workspaces";
 
 type TrendDay = { key: string; label: string; orders: number; revenue: number };
 type Dashboard = {
@@ -69,9 +69,8 @@ export default function AdminDashboard() {
   const maxRevenue = Math.max(1, ...data.trend.map((day) => day.revenue));
 
   return <main className="page">
-    <PageHead eyebrow="" title="经营工作台" subtitle="" action={<Link className="button primary" href="/admin/products/new"><PackageCheck size={15}/>新建商品</Link>}/>
+    <PageHead eyebrow="" title="管理首页" subtitle="" action={<Link className="button primary" href="/admin/products/new"><PackageCheck size={15}/>新建商品</Link>}/>
     <SetupBanner/>
-    <section className="workspace-grid" aria-label="内部管理工作区">{adminWorkspaces.map(({ code, title, description, href, status, icon: Icon }) => <Link className="workspace-card" href={href!} key={code}><span className="workspace-icon"><Icon size={19}/></span><div><small>{code} · {status === "available" ? "已启用" : "规划中"}</small><b>{title}</b><p>{description}</p></div><ArrowRight size={15}/></Link>)}</section>
     <section className="stats-grid">
       <StatCard label="今日入库件数" value={data.todayInbound} note={`${data.todayInboundOrders} 张统一入库单`} icon={Warehouse}/>
       <StatCard label="今日新增款号" value={data.newProducts} note="自动建立商品主档" icon={Boxes}/>
@@ -83,7 +82,6 @@ export default function AdminDashboard() {
       <StatCard label="缺货SKU" value={data.outOfStock} note={`当前实际库存 ${data.stock}`} icon={CircleDollarSign}/>
     </section>
 
-    <section className="panel" style={{ marginBottom: 18 }}><div className="panel-head"><div><h2>常用任务</h2><p>任务入口不会重复创建商品、订单或库存数据</p></div></div><div className="panel-body" style={{ display: "flex", gap: 10, flexWrap: "wrap" }}><Link className="button primary" href="/admin/products/pending">待完善商品</Link><Link className="button" href="/admin/products/new">新建并上架</Link><Link className="button" href="/admin/orders">订单管理</Link><Link className="button" href="/admin/inventory">库存监管</Link><Link className="button" href="/settings/colors">颜色管理</Link></div></section>
     <section className="content-grid">
       <div className="panel"><div className="panel-head"><div><h2>近 7 天经营趋势</h2><p>按订单创建时间统计，已取消订单不计入销售额</p></div></div>{data.trend.length ? <div className="panel-body trend-list">{data.trend.map((day) => <div className="trend-row" key={day.key}><span>{day.label}</span><div className="trend-track"><i style={{ width: `${Math.max(day.revenue ? 6 : 0, day.revenue / maxRevenue * 100)}%` }}/></div><b>€ {day.revenue.toFixed(2)}</b><small>{day.orders} 单</small></div>)}</div> : <EmptyState title="等待第一笔销售数据" description="顾客网站订单会自动进入这里。"/>}</div>
       <aside className="panel"><div className="panel-head"><div><h2>业务待办</h2><p>按影响销售的优先级整理</p></div></div><div className="panel-body quick-list"><Link className="quick-link" href="/admin/products/pending"><span className="quick-icon"><PackageCheck size={18}/></span><span><b>{data.pending} 个待完善商品</b><span>补全资料、价格与图片</span></span><ArrowRight size={15}/></Link><Link className="quick-link" href="/admin/inventory"><span className="quick-icon"><TriangleAlert size={18}/></span><span><b>{data.low} 个低库存 SKU</b><span>通过受控调整修正库存</span></span><ArrowRight size={15}/></Link><Link className="quick-link" href="/admin/orders"><span className="quick-icon"><TrendingUp size={18}/></span><span><b>{(data.statusCounts.PAID ?? 0) + (data.statusCounts.PICKING ?? 0)} 笔待处理订单</b><span>付款确认后进入仓库履约</span></span><ArrowRight size={15}/></Link><a className="quick-link" href={RETAIL_STOREFRONT_URL} target="_blank" rel="noreferrer"><span className="quick-icon"><ShoppingBag size={18}/></span><span><b>打开零售顾客网站</b><span>只查看已经发布的商品</span></span><ArrowRight size={15}/></a></div></aside>

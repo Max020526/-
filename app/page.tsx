@@ -19,10 +19,9 @@ export default function Home() {
           const content = <>
             <div className="portal-icon"><Icon size={25} strokeWidth={1.8} /></div>
             <h2>{title}</h2>
-            <b>{href ? (external ? "打开网站" : "进入工作区") : "暂不启用"} {href ? <ArrowRight size={17} /> : null}</b>
+            <b>{external ? "打开" : "进入"} <ArrowRight size={17} /></b>
           </>;
 
-          if (!href) return <article className={`portal-card ${tone} disabled`} key={id}>{content}</article>;
           if (external) return <a className={`portal-card ${tone}`} href={href} target="_blank" rel="noreferrer" key={id}>{content}</a>;
           return <Link className={`portal-card ${tone}`} href={href} key={id}>{content}</Link>;
         })}
