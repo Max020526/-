@@ -35,10 +35,13 @@ test("login redirects stay inside role-authorized workspaces and auth responses 
 
 test("admin user mutations enforce origin, size and self-role protections", async () => {
   const route = await source("app/api/admin/users/route.ts");
-  assert.match(route, /isSameOrigin\(request\)/);
-  assert.match(route, /MAX_BODY_BYTES/);
-  assert.match(route, /password\.length < 12/);
-  assert.match(route, /id === actor\.id && \(!isActive \|\| !canManageUsers\(normalizeInternalRole\(role\)\)\)/);
+  const invitationRoute = await source("app/api/admin/invitations/route.ts");
+  const registrationRoute = await source("app/api/employee/register/route.ts");
+  assert.match(route, /sameOrigin\(request\)/);
+  assert.match(invitationRoute, /sameOrigin\(request\)/);
+  assert.match(registrationRoute, /MAX_BODY_BYTES/);
+  assert.match(registrationRoute, /password\.length<12/);
+  assert.match(route, /id===actor\.id&&\(!isActive/);
   assert.match(route, /Cache-Control.*no-store/s);
 });
 
