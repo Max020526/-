@@ -1,275 +1,48 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useState } from "react";
-import { LoaderCircle, Plus, RefreshCw, Save } from "lucide-react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { Ban, Clipboard, Clock3, KeyRound, LoaderCircle, LogOut, MailPlus, RefreshCw, Save, ShieldCheck, Trash2, X } from "lucide-react";
 import { PageHead } from "@/components/shared/page-head";
-import { EmptyState } from "@/components/shared/empty-state";
-import { INTERNAL_ROLES, ROLE_LABELS } from "@/lib/auth/roles";
+import { ROLE_LABELS } from "@/lib/auth/roles";
 
-type Staff = {
-  id: string;
-  email: string;
-  full_name: string | null;
-  role: string | null;
-  is_active: boolean;
-  created_at: string;
-  last_sign_in_at: string | null;
-};
+type Option={id:string;code?:string;display_name_zh?:string;name?:string;name_zh?:string};
+type Permission={id:string;code:string;module:string;action:string;name:string|null;description:string|null};
+type Override={permission_id:string;code:string;effect:"allow"|"deny"};
+type Staff={id:string;email:string;full_name:string;role:string|null;role_id:string|null;is_active:boolean;warehouse_scope:"all"|"selected"|"none";category_scope:"all"|"selected"|"none";warehouse_ids:string[];category_ids:string[];permission_overrides:Override[];created_at:string;last_sign_in_at:string|null};
+type Invitation={id:string;email:string;employee_name:string;status:string;expires_at:string;used_at:string|null;link:string;role_id:string;warehouse_id:string|null;roles:Option|Option[]|null;warehouses:Option|Option[]|null};
+const MODULE_LABELS:Record<string,string>={receiving:"到货管理",inventory:"库存管理",product:"商品管理",sku:"SKU 管理",order:"订单管理",finance:"财务管理",employee:"员工管理",system:"系统设置",audit:"操作日志"};
+const STATUS_LABELS:Record<string,string>={pending:"待注册",accepted:"已接受",expired:"已过期",revoked:"已撤销"};
+function label(role:string|null){return role&&ROLE_LABELS[role as keyof typeof ROLE_LABELS]||role||"未分配";}
 
-export default function UsersPage() {
-  const [users, setUsers] = useState<Staff[]>([]);
-  const [form, setForm] = useState({
-    full_name: "",
-    email: "",
-    password: "",
-    role: "warehouse_staff",
-  });
-  const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState("");
-  const load = useCallback(async () => {
-    setLoading(true);
-    const response = await fetch("/api/admin/users", { cache: "no-store" });
-    const body = (await response.json()) as { error?: string; users?: Staff[] };
-    setLoading(false);
-    if (!response.ok) {
-      setMessage(body.error ?? "员工列表加载失败。");
-      return;
-    }
-    setUsers(body.users ?? []);
-  }, []);
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  async function create(event: FormEvent) {
-    event.preventDefault();
-    setBusy(true);
-    setMessage("");
-    const response = await fetch("/api/admin/users", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(form),
-    });
-    const body = (await response.json()) as { error?: string };
-    setBusy(false);
-    if (!response.ok) {
-      setMessage(body.error ?? "创建失败。");
-      return;
-    }
-    setForm({ full_name: "", email: "", password: "", role: "warehouse_staff" });
-    setMessage("员工账号创建成功，请安全地把临时密码交给员工。");
-    await load();
-  }
-
-  async function update(user: Staff) {
-    setBusy(true);
-    setMessage("");
-    const response = await fetch("/api/admin/users", {
-      method: "PATCH",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(user),
-    });
-    const body = (await response.json()) as { error?: string };
-    setBusy(false);
-    setMessage(response.ok ? "员工资料已更新。" : (body.error ?? "更新失败。"));
-    if (response.ok) await load();
-  }
-
-  return (
-    <main className="page">
-      <PageHead
-        eyebrow="STAFF ACCESS"
-        title="员工管理"
-        subtitle="按正式岗位分配最小权限；停用账号后将立即失去内部工作区访问权。"
-        action={
-          <button className="button" onClick={() => void load()}>
-            <RefreshCw size={15} />
-            刷新
-          </button>
-        }
-      />
-      <section className="content-grid">
-        <form className="form-card" onSubmit={create}>
-          <div className="panel-head" style={{ padding: 0, marginBottom: 16 }}>
-            <div>
-              <h2>新增员工账号</h2>
-              <p>创建后邮箱即为登录账号</p>
-            </div>
-          </div>
-          <div className="form-grid">
-            <div className="field">
-              <label>员工姓名 *</label>
-              <input
-                required
-                value={form.full_name}
-                onChange={(event) =>
-                  setForm({ ...form, full_name: event.target.value })
-                }
-              />
-            </div>
-            <div className="field">
-              <label>邮箱 *</label>
-              <input
-                required
-                type="email"
-                autoComplete="off"
-                value={form.email}
-                onChange={(event) =>
-                  setForm({ ...form, email: event.target.value })
-                }
-              />
-            </div>
-            <div className="field">
-              <label>临时密码 *</label>
-              <input
-                required
-                minLength={12}
-                maxLength={128}
-                type="password"
-                autoComplete="new-password"
-                value={form.password}
-                onChange={(event) =>
-                  setForm({ ...form, password: event.target.value })
-                }
-              />
-            </div>
-            <div className="field">
-              <label>角色</label>
-              <select
-                value={form.role}
-                onChange={(event) =>
-                  setForm({ ...form, role: event.target.value })
-                }
-              >
-                {INTERNAL_ROLES.map((role) => <option key={role} value={role}>{ROLE_LABELS[role]}</option>)}
-              </select>
-            </div>
-          </div>
-          <button
-            className="button primary"
-            disabled={busy}
-            style={{ marginTop: 16 }}
-          >
-            {busy ? <LoaderCircle size={15} /> : <Plus size={15} />}创建账号
-          </button>
-        </form>
-        <section className="panel">
-          <div className="panel-head">
-            <div>
-              <h2>内部账号</h2>
-              <p>共 {users.length} 个</p>
-            </div>
-          </div>
-          {message && (
-            <div className="panel-body">
-              <p className="notice">{message}</p>
-            </div>
-          )}
-          {loading ? (
-            <div className="panel-body muted">正在加载…</div>
-          ) : users.length ? (
-            <div className="table-wrap">
-              <table className="data-table">
-                <thead>
-                  <tr>
-                    <th>姓名 / 邮箱</th>
-                    <th>角色</th>
-                    <th>状态</th>
-                    <th>最近登录</th>
-                    <th>操作</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {users.map((user, index) => (
-                    <tr key={user.id}>
-                      <td>
-                        <input
-                          aria-label="姓名"
-                          value={user.full_name ?? ""}
-                          onChange={(event) =>
-                            setUsers((items) =>
-                              items.map((item, i) =>
-                                i === index
-                                  ? { ...item, full_name: event.target.value }
-                                  : item,
-                              ),
-                            )
-                          }
-                        />
-                        <small
-                          className="muted"
-                          style={{ display: "block", marginTop: 5 }}
-                        >
-                          {user.email}
-                        </small>
-                      </td>
-                      <td>
-                        <select
-                          value={user.role === "employee" ? "warehouse_staff" : user.role === "admin" ? "system_admin" : user.role ?? "warehouse_staff"}
-                          onChange={(event) =>
-                            setUsers((items) =>
-                              items.map((item, i) =>
-                                i === index
-                                  ? { ...item, role: event.target.value }
-                                  : item,
-                              ),
-                            )
-                          }
-                        >
-                          {INTERNAL_ROLES.map((role) => <option key={role} value={role}>{ROLE_LABELS[role]}</option>)}
-                        </select>
-                      </td>
-                      <td>
-                        <select
-                          value={String(user.is_active)}
-                          onChange={(event) =>
-                            setUsers((items) =>
-                              items.map((item, i) =>
-                                i === index
-                                  ? {
-                                      ...item,
-                                      is_active: event.target.value === "true",
-                                    }
-                                  : item,
-                              ),
-                            )
-                          }
-                        >
-                          <option value="true">启用</option>
-                          <option value="false">停用</option>
-                        </select>
-                      </td>
-                      <td>
-                        {user.last_sign_in_at
-                          ? new Date(user.last_sign_in_at).toLocaleString(
-                              "zh-CN",
-                            )
-                          : "从未"}
-                      </td>
-                      <td>
-                        <button
-                          className="icon-btn"
-                          disabled={busy}
-                          aria-label="保存员工"
-                          onClick={() => void update(user)}
-                        >
-                          <Save size={15} />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <EmptyState
-              title="没有员工账号"
-              description="请先配置服务端密钥，再创建第一个员工账号。"
-            />
-          )}
-        </section>
-      </section>
-    </main>
-  );
+export default function UsersPage(){
+  const [users,setUsers]=useState<Staff[]>([]);const [invitations,setInvitations]=useState<Invitation[]>([]);const [roles,setRoles]=useState<Option[]>([]);const [warehouses,setWarehouses]=useState<Option[]>([]);const [categories,setCategories]=useState<Option[]>([]);const [permissions,setPermissions]=useState<Permission[]>([]);
+  const [loading,setLoading]=useState(true);const [busy,setBusy]=useState(false);const [message,setMessage]=useState("");const [editing,setEditing]=useState<Staff|null>(null);const [inviteLink,setInviteLink]=useState("");
+  const [invite,setInvite]=useState({employeeName:"",email:"",roleId:"",warehouseId:"",days:7});
+  const load=useCallback(async()=>{setLoading(true);setMessage("");try{const [u,i]=await Promise.all([fetch("/api/admin/users",{cache:"no-store"}),fetch("/api/admin/invitations",{cache:"no-store"})]);const ub=await u.json() as {error?:string;users?:Staff[];permissions?:Permission[]};const ib=await i.json() as {error?:string;invitations?:Invitation[];roles?:Option[];warehouses?:Option[];categories?:Option[]};if(!u.ok)throw new Error(ub.error);if(!i.ok)throw new Error(ib.error);setUsers(ub.users??[]);setPermissions(ub.permissions??[]);setInvitations(ib.invitations??[]);setRoles((ib.roles??[]).filter((r)=>r.code!=="customer"));setWarehouses(ib.warehouses??[]);setCategories(ib.categories??[]);setInvite((value)=>({...value,roleId:value.roleId||ib.roles?.find((r)=>r.code==="warehouse_staff")?.id||"",warehouseId:value.warehouseId||ib.warehouses?.[0]?.id||""}));}catch(error){setMessage(error instanceof Error?error.message:"员工数据加载失败。");}finally{setLoading(false);}},[]);
+  useEffect(()=>{void load();},[load]);
+  const grouped=useMemo(()=>permissions.reduce<Record<string,Permission[]>>((map,p)=>{(map[p.module]??=[]).push(p);return map;},{}),[permissions]);
+  async function api(url:string,method:string,payload:unknown){setBusy(true);setMessage("");const response=await fetch(url,{method,headers:{"content-type":"application/json"},body:JSON.stringify(payload)});const body=await response.json() as Record<string,unknown>;setBusy(false);if(!response.ok)throw new Error(typeof body.error==="string"?body.error:"操作失败。");return body;}
+  async function createInvite(event:FormEvent){event.preventDefault();try{const body=await api("/api/admin/invitations","POST",invite);setInviteLink(typeof body.link==="string"?body.link:"");setMessage("邀请已创建并复制链接后即可发送给员工。");setInvite((v)=>({...v,employeeName:"",email:""}));await load();}catch(error){setMessage(error instanceof Error?error.message:"创建邀请失败。");}}
+  async function invitationAction(id:string,action:string){try{const body=await api("/api/admin/invitations","PATCH",{id,action});if(typeof body.link==="string")setInviteLink(body.link);setMessage(action==="resend"?"新邀请已生成，旧链接已立即失效。":"邀请状态已更新。");await load();}catch(error){setMessage(error instanceof Error?error.message:"邀请操作失败。");}}
+  async function removeInvitation(id:string){try{await api("/api/admin/invitations","DELETE",{id});setMessage("失效邀请已删除。");await load();}catch(error){setMessage(error instanceof Error?error.message:"删除失败。");}}
+  async function copy(value:string){await navigator.clipboard.writeText(value);setMessage("邀请链接已复制。");}
+  function setOverride(permission:Permission,effect:string){if(!editing)return;const rest=editing.permission_overrides.filter((o)=>o.permission_id!==permission.id);setEditing({...editing,permission_overrides:effect? [...rest,{permission_id:permission.id,code:permission.code,effect:effect as "allow"|"deny"}]:rest});}
+  async function save(){if(!editing)return;try{await api("/api/admin/users","PATCH",editing);setMessage("员工资料、角色和数据范围已更新；权限将在下次加载时生效。");setEditing(null);await load();}catch(error){setMessage(error instanceof Error?error.message:"更新失败。");}}
+  async function security(action:string){if(!editing)return;try{const body=await api("/api/admin/users","PATCH",{id:editing.id,action});if(typeof body.recoveryLink==="string"){await copy(body.recoveryLink);setMessage("密码重置链接已复制。" );}else setMessage("员工会话已强制退出。" );}catch(error){setMessage(error instanceof Error?error.message:"安全操作失败。");}}
+  return <main className="page staff-access-page"><PageHead eyebrow="RBAC + DATA SCOPE" title="员工账号与权限" subtitle="岗位模板、个人允许/拒绝、仓库与商品分类范围由服务端和 RLS 同时校验。" action={<button className="button" onClick={()=>void load()}><RefreshCw size={15}/>刷新</button>}/>
+    {message&&<p className="notice">{message}</p>}
+    <section className="content-grid"><form className="form-card" onSubmit={createInvite}><div className="panel-head" style={{padding:0}}><div><h2>邀请员工注册</h2><p>员工通过安全链接设置自己的密码</p></div></div><div className="form-grid">
+      <div className="field"><label>姓名</label><input required value={invite.employeeName} onChange={(e)=>setInvite({...invite,employeeName:e.target.value})}/></div><div className="field"><label>邮箱</label><input required type="email" value={invite.email} onChange={(e)=>setInvite({...invite,email:e.target.value})}/></div>
+      <div className="field"><label>岗位</label><select required value={invite.roleId} onChange={(e)=>setInvite({...invite,roleId:e.target.value})}>{roles.map((r)=><option key={r.id} value={r.id}>{r.display_name_zh||r.name||r.code}</option>)}</select></div><div className="field"><label>仓库</label><select value={invite.warehouseId} onChange={(e)=>setInvite({...invite,warehouseId:e.target.value})}><option value="">不分配仓库</option>{warehouses.map((w)=><option key={w.id} value={w.id}>{w.name} ({w.code})</option>)}</select></div>
+      <div className="field"><label>有效天数</label><input type="number" min={1} max={30} value={invite.days} onChange={(e)=>setInvite({...invite,days:Number(e.target.value)})}/></div></div><button className="button primary" disabled={busy}><MailPlus size={15}/>生成邀请链接</button>
+      {inviteLink&&<div className="invite-link-box"><input readOnly value={inviteLink}/><button type="button" className="icon-btn" onClick={()=>void copy(inviteLink)}><Clipboard size={15}/></button></div>}
+    </form><section className="panel"><div className="panel-head"><div><h2>邀请状态</h2><p>{invitations.length} 条邀请</p></div></div><div className="table-wrap"><table className="data-table"><thead><tr><th>员工</th><th>岗位 / 仓库</th><th>状态</th><th>有效期</th><th>操作</th></tr></thead><tbody>{invitations.map((i)=>{const role=Array.isArray(i.roles)?i.roles[0]:i.roles;const warehouse=Array.isArray(i.warehouses)?i.warehouses[0]:i.warehouses;return <tr key={i.id}><td>{i.employee_name}<small className="muted staff-email">{i.email}</small></td><td>{role?.display_name_zh||role?.code}<small className="muted staff-email">{warehouse?.name||"无仓库"}</small></td><td>{STATUS_LABELS[i.status]||i.status}</td><td>{new Date(i.expires_at).toLocaleString("zh-CN")}</td><td><div className="staff-actions">{i.status==="pending"&&<><button className="icon-btn" title="复制链接" onClick={()=>void copy(i.link)}><Clipboard size={14}/></button><button className="icon-btn" title="重新发送" onClick={()=>void invitationAction(i.id,"resend")}><MailPlus size={14}/></button><button className="icon-btn" title="延长 7 天" onClick={()=>void invitationAction(i.id,"extend")}><Clock3 size={14}/></button><button className="icon-btn" title="撤销" onClick={()=>void invitationAction(i.id,"revoke")}><Ban size={14}/></button></>}{i.status!=="pending"&&<button className="icon-btn" title="删除失效邀请" onClick={()=>void removeInvitation(i.id)}><Trash2 size={14}/></button>}</div></td></tr>})}</tbody></table></div></section></section>
+    <section className="panel staff-table"><div className="panel-head"><div><h2>员工账号</h2><p>点击“编辑权限”配置功能和数据范围</p></div></div>{loading?<div className="loading-block"><LoaderCircle className="spin"/> 正在加载…</div>:<div className="table-wrap"><table className="data-table"><thead><tr><th>姓名</th><th>邮箱</th><th>岗位</th><th>仓库范围</th><th>商品分类范围</th><th>权限模板</th><th>状态</th><th>最后登录</th><th>操作</th></tr></thead><tbody>{users.map((u)=><tr key={u.id}><td>{u.full_name}</td><td>{u.email}</td><td>{label(u.role)}</td><td>{u.warehouse_scope==="all"?"全部仓库":u.warehouse_scope==="selected"?`${u.warehouse_ids.length} 个仓库`:"无仓库权限"}</td><td>{u.category_scope==="all"?"全部分类":u.category_scope==="selected"?`${u.category_ids.length} 个分类`:"无分类权限"}</td><td>{u.role==="owner"||u.role==="system_admin"?"完整权限":`${label(u.role)}模板${u.permission_overrides.length?` + ${u.permission_overrides.length}项覆盖`:""}`}</td><td>{u.is_active?"启用":"停用"}</td><td>{u.last_sign_in_at?new Date(u.last_sign_in_at).toLocaleString("zh-CN"):"从未"}</td><td><button className="button small" onClick={()=>setEditing(structuredClone(u))}><ShieldCheck size={14}/>编辑权限</button></td></tr>)}</tbody></table></div>}</section>
+    {editing&&<div className="staff-modal-backdrop"><section className="staff-modal"><div className="panel-head"><div><h2>编辑权限 · {editing.full_name}</h2><p>{editing.email}</p></div><button className="icon-btn" onClick={()=>setEditing(null)}><X size={16}/></button></div><div className="staff-editor-grid"><section><h3>基本资料</h3><div className="form-grid"><div className="field"><label>姓名</label><input value={editing.full_name} onChange={(e)=>setEditing({...editing,full_name:e.target.value})}/></div><div className="field"><label>岗位</label><select value={editing.role_id??""} onChange={(e)=>setEditing({...editing,role_id:e.target.value})}>{roles.map((r)=><option key={r.id} value={r.id}>{r.display_name_zh||r.name||r.code}</option>)}</select></div><div className="field"><label>状态</label><select value={String(editing.is_active)} onChange={(e)=>setEditing({...editing,is_active:e.target.value==="true"})}><option value="true">启用</option><option value="false">停用</option></select></div></div></section>
+      <section><h3>数据范围</h3><div className="form-grid"><div className="field"><label>仓库范围</label><select value={editing.warehouse_scope} onChange={(e)=>setEditing({...editing,warehouse_scope:e.target.value as Staff["warehouse_scope"]})}><option value="all">全部仓库</option><option value="selected">指定仓库</option><option value="none">无仓库权限</option></select></div><div className="field"><label>商品分类范围</label><select value={editing.category_scope} onChange={(e)=>setEditing({...editing,category_scope:e.target.value as Staff["category_scope"]})}><option value="all">全部分类</option><option value="selected">指定分类</option><option value="none">无分类权限</option></select></div></div>
+        {editing.warehouse_scope==="selected"&&<div className="scope-checks">{warehouses.map((w)=><label key={w.id}><input type="checkbox" checked={editing.warehouse_ids.includes(w.id)} onChange={(e)=>setEditing({...editing,warehouse_ids:e.target.checked?[...editing.warehouse_ids,w.id]:editing.warehouse_ids.filter((id)=>id!==w.id)})}/>{w.name}</label>)}</div>}
+        {editing.category_scope==="selected"&&<div className="scope-checks">{categories.map((c)=><label key={c.id}><input type="checkbox" checked={editing.category_ids.includes(c.id)} onChange={(e)=>setEditing({...editing,category_ids:e.target.checked?[...editing.category_ids,c.id]:editing.category_ids.filter((id)=>id!==c.id)})}/>{c.name_zh||c.name}</label>)}</div>}
+      </section><section><h3>功能权限</h3><p className="muted">继承岗位模板；个人拒绝优先于允许。</p><div className="permission-modules">{Object.entries(grouped).map(([module,items])=><div key={module}><h4>{MODULE_LABELS[module]||module}</h4>{items.map((p)=>{const value=editing.permission_overrides.find((o)=>o.permission_id===p.id)?.effect??"";return <label key={p.id}><span><b>{p.name||p.code}</b><small>{p.code}</small></span><select value={value} onChange={(e)=>setOverride(p,e.target.value)}><option value="">继承岗位</option><option value="allow">单独允许</option><option value="deny">明确拒绝</option></select></label>})}</div>)}</div></section>
+      <section><h3>账号安全</h3><div className="staff-security"><button className="button" onClick={()=>void security("reset_password")}><KeyRound size={15}/>复制重置密码链接</button><button className="button" onClick={()=>void security("force_logout")}><LogOut size={15}/>强制退出</button><a className="button" href={`/settings/audit?user=${editing.id}`}><ShieldCheck size={15}/>查看操作日志</a></div></section></div><div className="staff-modal-footer"><button className="button" onClick={()=>setEditing(null)}>取消</button><button className="button primary" disabled={busy} onClick={()=>void save()}>{busy?<LoaderCircle className="spin" size={15}/>:<Save size={15}/>}保存权限</button></div></section></div>}
+  </main>;
 }
