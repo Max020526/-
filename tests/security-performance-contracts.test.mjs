@@ -66,6 +66,7 @@ test("quick inbound uses one model number with multiple color rows and custom co
   const page = await source("app/inbound/new/page.tsx");
   assert.match(page, /fast-primary-card/);
   assert.match(page, /fast-inbound-more/);
+  assert.match(page, /hasStarted && summary\.error/);
   assert.match(page, /再加一行/);
   assert.match(page, /确认入库/);
   assert.match(page, /rpc_post_inbound_receipt/);

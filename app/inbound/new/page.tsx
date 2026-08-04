@@ -107,6 +107,7 @@ export default function FastInboundPage() {
       return { items: [], total: 0, error: error instanceof Error ? error.message : "请检查入库内容" };
     }
   }, [draftRows]);
+  const hasStarted = Boolean(modelNumber.trim() || lines.some((line) => line.colorId || line.quantity));
 
   function updateLine(key: string, field: "colorId" | "sizeId" | "quantity", value: string) {
     setLines((current) => current.map((line) => line.key === key ? { ...line, [field]: value } : line));
@@ -242,7 +243,7 @@ export default function FastInboundPage() {
       <details className="fast-inbound-more"><summary>更多信息</summary><div className="fast-more-grid"><div className="field"><label>到货日期</label><input type="date" value={arrivalDate} onChange={(event) => setArrivalDate(event.target.value)} required/></div><div className="field"><label>供应商</label><select value={supplierId} onChange={(event) => setSupplierId(event.target.value)}><option value="">未指定</option>{suppliers.map((supplier) => <option key={supplier.id} value={supplier.id}>{supplier.name}</option>)}</select></div><div className="field"><label>供应商单号</label><input value={supplierReference} onChange={(event) => setSupplierReference(event.target.value)} placeholder="选填" maxLength={80}/></div><div className="field"><label>备注</label><input value={notes} onChange={(event) => setNotes(event.target.value)} placeholder="选填" maxLength={500}/></div><label className="fast-keep-model"><input type="checkbox" checked={keepModel} onChange={(event) => setKeepModel(event.target.checked)}/> 连续录入时保留款号</label></div></details>
 
       <div className="fast-confirm-bar"><span><b>{summary.total}</b> 件 · {summary.items.length} 个 SKU</span><button type="button" className="button primary" disabled={loading || saving || Boolean(summary.error) || !summary.items.length} onClick={() => void confirm()}>{saving && <LoaderCircle size={15}/>}确认入库</button></div>
-      {summary.error && <div className="notice warning">{summary.error}</div>}
+      {hasStarted && summary.error && <div className="notice warning">{summary.error}</div>}
     </section>
   </main>;
 }
