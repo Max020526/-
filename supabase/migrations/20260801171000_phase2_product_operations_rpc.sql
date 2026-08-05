@@ -634,7 +634,7 @@ begin
 
   update public.products set
     workflow_status=case when publication_status='published' then 'published' else 'ready' end,
-    status=case when publication_status='published' then 'PUBLISHED' else 'READY_TO_PUBLISH' end,
+    status=(case when publication_status='published' then 'PUBLISHED' else 'READY_TO_PUBLISH' end)::public.product_status,
     updated_by=actor_id,updated_at=now()
   where id=product_value.id;
 
