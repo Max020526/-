@@ -332,7 +332,13 @@ end;
 $$;
 revoke all on function public.rpc_complete_employee_registration(text,uuid,text,text) from public, anon, authenticated;
 grant execute on function public.rpc_complete_employee_registration(text,uuid,text,text) to service_role;
-revoke execute on function public.rpc_validate_staff_invitation(text,text) from anon, authenticated;
+do $$
+begin
+  if to_regprocedure('public.rpc_validate_staff_invitation(text,text)') is not null then
+    execute 'revoke execute on function public.rpc_validate_staff_invitation(text,text) from anon, authenticated';
+  end if;
+end;
+$$;
 
 -- Self/admin metadata visibility. Invite rows remain service-only.
 drop policy if exists employees_self_or_admin on public.employees;
