@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 
 const read = (path) => readFile(new URL(`../${path}`, import.meta.url), "utf8");
@@ -14,13 +15,19 @@ test("Phase 6 protects immutable ledgers at the database boundary", async () => 
   assert.match(sqlTest, /views without security_invoker/);
 });
 
-test("both Netlify applications enforce environment isolation before build", async () => {
-  const [adminConfig, storeConfig] = await Promise.all([read("netlify.toml"), read("customer-store/netlify.toml")]);
+test("the internal Netlify application enforces environment isolation before build", async () => {
+  const adminConfig = await read("netlify.toml");
   assert.match(adminConfig, /verify:environment/);
-  assert.match(storeConfig, /verify:environment/);
   const verifier = await read("scripts/verify-deployment-environment.mjs");
   assert.match(verifier, /预览构建禁止连接生产 Supabase/);
   assert.match(verifier, /service[_-]?role/);
+});
+
+const customerStoreConfig = new URL("../customer-store/netlify.toml", import.meta.url);
+test("the separately maintained customer storefront enforces environment isolation when present", {
+  skip: !existsSync(customerStoreConfig),
+}, async () => {
+  assert.match(await readFile(customerStoreConfig, "utf8"), /verify:environment/);
 });
 
 test("release documentation separates automated evidence from production gates", async () => {

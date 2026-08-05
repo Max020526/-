@@ -20,8 +20,10 @@ export function validateDeploymentEnvironment(env = process.env) {
   const url = (env.NEXT_PUBLIC_SUPABASE_URL || "").trim();
   const key = (env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "").trim();
   const siteUrl = (env.NEXT_PUBLIC_SITE_URL || "").trim();
+  const deployPrimeUrl = (env.DEPLOY_PRIME_URL || "").trim();
   const projectRef = supabaseProjectRef(url);
   const productionRef = (env.PRODUCTION_SUPABASE_PROJECT_REF || "").trim().toLowerCase();
+  const effectiveSiteUrl = PREVIEW_CONTEXTS.has(context) && deployPrimeUrl ? deployPrimeUrl : siteUrl;
 
   if (/sb_secret_|service[_-]?role/i.test(key)) {
     issues.push("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY 不能使用 secret/service_role 密钥。");
@@ -33,7 +35,7 @@ export function validateDeploymentEnvironment(env = process.env) {
     issues.push("托管构建必须配置有效的 Supabase Cloud URL。");
   }
   if (!key || /REPLACE_ME/i.test(key)) issues.push("托管构建必须配置有效的 Supabase publishable key。");
-  if (!siteUrl || !siteUrl.startsWith("https://") || /YOUR_/i.test(siteUrl)) {
+  if (!effectiveSiteUrl || !effectiveSiteUrl.startsWith("https://") || /YOUR_/i.test(effectiveSiteUrl)) {
     issues.push("托管构建必须配置 HTTPS 的 NEXT_PUBLIC_SITE_URL。");
   }
   if (!productionRef || /YOUR_/i.test(productionRef)) {

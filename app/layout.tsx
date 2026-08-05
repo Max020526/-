@@ -14,8 +14,13 @@ const display = Plus_Jakarta_Sans({
   subsets: ["latin"],
 });
 
+const deployContext = process.env.CONTEXT?.toLowerCase();
+const previewUrl = deployContext === "deploy-preview" || deployContext === "branch-deploy"
+  ? process.env.DEPLOY_PRIME_URL
+  : undefined;
+
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+  metadataBase: new URL(previewUrl ?? process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
   title: {
     default: "NEXORA 批发零售一体化系统",
     template: "%s · NEXORA",
