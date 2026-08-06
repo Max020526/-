@@ -18,6 +18,7 @@ Until Admin/Operations extraction is complete, their temporary sites leave Base 
 - `nexora-wholesale` is Git-connected to `Max020526/WholesaleSystem`, Production branch `main`, base `/`, build `npm run verify:environment && npm run build:netlify`, publish `.next`.
 - Netlify UI reports Node `24.x`, while version-controlled `netlify.toml` requires `22.13.0`; explicitly set `NODE_VERSION=22.13.0` to remove this ambiguity.
 - Branch deploys are disabled and Deploy Previews are set to “Don’t deploy pull requests”. This is why PR #16 has no Netlify Preview check.
+- Deploy logs are public, and “All deployment methods can deploy to production” is enabled. This conflicts with Git-only controlled publishing and must be tightened before Production release.
 - `NEXT_PUBLIC_SUPABASE_URL` is correctly context-separated now: Production targets Production Supabase; Deploy Previews and Branch deploys target Staging Supabase.
 - The site is still missing required guards/identity variables such as `NEXT_PUBLIC_APP_ENV`, `NEXT_PUBLIC_APP_SURFACE`, `NEXT_PUBLIC_APP_NAME`, `STAGING_SUPABASE_PROJECT_REF` and cross-app URLs. The new strict build will fail until they are added per context.
 - `nexora-store-test` was manually deployed from CLI, is paused and is not an acceptable long-term Staging site.
@@ -34,6 +35,8 @@ Until Admin/Operations extraction is complete, their temporary sites leave Base 
 7. Disable Deploy Previews on Production sites or explicitly scope their Preview context to Staging credentials. Never inherit Production values into Deploy Preview.
 8. Add password/SSO protection to Staging and do not publish Staging addresses on the public storefront.
 9. Confirm `/robots.txt`, `X-Robots-Tag` and the visible banner on Staging/Preview.
+10. Under **Build & deploy → Build settings**, change Deploy log visibility to private/team-only where the plan allows it.
+11. Under **Build & deploy → Enforce deployment methods**, restrict Production publishing to the approved Git workflow; do not leave CLI/API/MCP/manual deploys able to overwrite Production.
 
 ## Exact Staging fields
 
