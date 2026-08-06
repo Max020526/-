@@ -358,7 +358,7 @@ create or replace function public.rpc_get_storefront_catalog(
 ) returns jsonb
 language sql
 stable
-security invoker
+security definer
 set search_path=''
 as $$ select private.get_storefront_catalog(p_slug,p_limit); $$;
 
