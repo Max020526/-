@@ -92,7 +92,6 @@ begin
 end;
 $$;
 
-rollback;
-
 select pass('A11-A13 passed inside rollback transaction');
 select * from finish();
+rollback;
