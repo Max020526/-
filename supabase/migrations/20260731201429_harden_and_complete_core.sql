@@ -2,7 +2,13 @@
 
 -- Public buckets serve object URLs without a broad storage.objects SELECT policy.
 drop policy if exists product_images_public_read on storage.objects;
-revoke execute on function public.rls_auto_enable() from public, anon, authenticated;
+do $$
+begin
+  if to_regprocedure('public.rls_auto_enable()') is not null then
+    execute 'revoke execute on function public.rls_auto_enable() from public, anon, authenticated';
+  end if;
+end;
+$$;
 
 -- Frequently joined/filtering foreign keys. PostgreSQL does not index these automatically.
 create index if not exists audit_logs_user_id_idx on public.audit_logs(user_id);

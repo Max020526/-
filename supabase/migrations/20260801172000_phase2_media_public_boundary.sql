@@ -78,11 +78,11 @@ begin
   end if;
 
   insert into public.product_images (
-    organization_id, product_id, variant_id, file_path, storage_path, public_url,
-    image_type, sort_order, is_primary, mime_type, file_size, width, height,
+    organization_id, product_id, variant_id, file_path, public_url,
+    image_type, sort_order, is_primary, mime_type, file_size_bytes, width, height,
     alt_text_zh, alt_text_it, alt_text_en, created_by, updated_by
   ) values (
-    organization_value, p_product_id, p_variant_id, p_storage_path, p_storage_path, '',
+    organization_value, p_product_id, p_variant_id, p_storage_path, '',
     case when make_primary then 'MAIN' else p_media_type end, sort_value, make_primary,
     p_mime_type, p_file_size, p_width, p_height,
     nullif(trim(p_alt_text_zh),''), nullif(trim(p_alt_text_it),''),
