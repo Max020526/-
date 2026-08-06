@@ -23,7 +23,7 @@
 
 ## GitHub Environments
 
-The `staging` and `production` GitHub Environments were created on 2026-08-06. Their secrets and deployment restrictions still require manual configuration.
+The `staging` and `production` GitHub Environments were created on 2026-08-06. `staging` is remotely restricted to `develop`; `production` is remotely restricted to protected branches. Their secrets and Production reviewer still require manual configuration.
 
 Staging secrets:
 
@@ -45,16 +45,25 @@ Production secrets:
 - `PRODUCTION_OPERATIONS_SITE_ID`
 - `PRODUCTION_STOREFRONT_SITE_ID`
 
-Set a required reviewer and prevent self-review on `production`. Restrict deployment branches to `main`; restrict `staging` to `develop`.
+Add a second trusted maintainer before enabling the Production required reviewer. GitHub does not permit the deployment initiator to approve their own protected deployment.
 
 ## Protection settings
 
-Existing `main` protection blocks force push/deletion, enforces admins and requires conversation resolution. `develop` now has the same destructive-operation protections and requires the six GitHub CI checks emitted by this PR. Remaining actions:
+`main` and `develop` now block force push/deletion, enforce admins, require conversation resolution and require the six real GitHub CI checks emitted by this PR:
+
+- `PR policy`
+- `Code quality and builds`
+- `Storefront quality and build`
+- `Migration and database tests`
+- `Secret scan`
+- `Dependency review`
+
+The obsolete `netlify/nexora-wholesale/deploy-preview` requirement was removed from `main` because the current Netlify site has Deploy Previews disabled. Remaining actions:
 
 GitHub Dependency Graph, Secret Scanning and Push Protection are enabled for this public repository.
 
 1. Configure a second trusted reviewer before requiring approvals; a repository owner cannot approve their own PR.
-2. Add a required reviewer and `main` deployment-branch restriction to the `production` Environment.
-3. Restrict the `staging` Environment to `develop`.
-4. Replace the obsolete main Netlify check only after the new production sites are Git-connected.
-5. Require the relevant Netlify Deploy Preview checks on `develop` after the three Staging sites are enabled.
+2. In **Settings → Environments → production**, add that maintainer as Required reviewer and disable administrator bypass if the plan/UI allows it.
+3. Add the Environment secrets listed above; current remote audit found no repository, Staging or Production Action secrets.
+4. Require the relevant Netlify Deploy Preview checks on `develop` only after dedicated Staging sites emit stable check names.
+5. Keep approval count at zero until a second reviewer exists; otherwise the single owner can deadlock every PR.

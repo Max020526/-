@@ -1,5 +1,7 @@
 # Remote schema drift audit — 2026-08-06
 
+逐条 version 与 SQL 指纹矩阵见 [`docs/deployment/MIGRATION-DRIFT-AUDIT.md`](../deployment/MIGRATION-DRIFT-AUDIT.md)。本文件保留高层结论。
+
 本审计为只读；没有对远程数据库执行 migration、reset 或 seed。
 
 | 项目 | public 表 | migration history | Edge Functions | Storage buckets |

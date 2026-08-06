@@ -13,24 +13,57 @@
 
 Until Admin/Operations extraction is complete, their temporary sites leave Base directory empty and use the matching `NEXT_PUBLIC_APP_SURFACE`; do not point them at the placeholder folders. The approved original Storefront source is preserved at `apps/storefront`, so its two sites use that Base directory after this Draft PR passes CI and Staging review. Never publish the root legacy `/shop` routes as the customer website.
 
-## Current remote findings
+## Current remote findings — 2026-08-06 read-only audit
 
-- `nexora-wholesale` is Git-connected to `main`, allows only `main`, and currently skips PR builds.
-- Its production context currently resolves to the Staging Supabase project. Do not deploy this branch until the Production site variables are corrected.
-- `nexora-store-test` was manually deployed, is paused, has no Git build configuration and has no application environment variables.
+- `nexora-wholesale` is Git-connected to `Max020526/WholesaleSystem`, Production branch `main`, base `/`, build `npm run verify:environment && npm run build:netlify`, publish `.next`.
+- Netlify UI reports Node `24.x`, while version-controlled `netlify.toml` requires `22.13.0`; explicitly set `NODE_VERSION=22.13.0` to remove this ambiguity.
+- Branch deploys are disabled and Deploy Previews are set to “Don’t deploy pull requests”. This is why PR #16 has no Netlify Preview check.
+- `NEXT_PUBLIC_SUPABASE_URL` is correctly context-separated now: Production targets Production Supabase; Deploy Previews and Branch deploys target Staging Supabase.
+- The site is still missing required guards/identity variables such as `NEXT_PUBLIC_APP_ENV`, `NEXT_PUBLIC_APP_SURFACE`, `NEXT_PUBLIC_APP_NAME`, `STAGING_SUPABASE_PROJECT_REF` and cross-app URLs. The new strict build will fail until they are added per context.
+- `nexora-store-test` was manually deployed from CLI, is paused and is not an acceptable long-term Staging site.
 - No dedicated Staging Admin/Operations site exists.
 
 ## Create/configure each site
 
 1. Add new site → Import from Git → `Max020526/WholesaleSystem`.
 2. Set production branch to `main` for Production sites or `develop` for Staging sites.
-3. During compatibility phase, Admin/Operations use base directory empty. Storefront uses base directory `apps/storefront`. Build command is `npm run build:netlify`, publish directory `.next`.
+3. During compatibility phase, Admin/Operations use base directory `/` (repository root). Storefront uses base directory `apps/storefront` only after its integration PR is approved. Build command is `npm run build:netlify`, publish directory `.next`.
 4. Set Node `22.13.0`.
 5. Configure the variables from `ENVIRONMENT-MATRIX.md`; never copy all variables between Staging and Production.
 6. Enable Deploy Previews for PRs on the three Staging sites. Their Preview context must use `NEXT_PUBLIC_APP_ENV=preview` and Staging/Preview Supabase credentials.
 7. Disable Deploy Previews on Production sites or explicitly scope their Preview context to Staging credentials. Never inherit Production values into Deploy Preview.
 8. Add password/SSO protection to Staging and do not publish Staging addresses on the public storefront.
 9. Confirm `/robots.txt`, `X-Robots-Tag` and the visible banner on Staging/Preview.
+
+## Exact Staging fields
+
+### `nexora-admin-staging`
+
+- Repository: `Max020526/WholesaleSystem`
+- Production branch for this Staging site: `develop`
+- Base directory: `/`
+- Build command: `npm run build:netlify`
+- Publish directory: `.next`
+- Node: `22.13.0`
+- `NEXT_PUBLIC_APP_ENV=staging`
+- `NEXT_PUBLIC_APP_SURFACE=admin`
+- Add the remaining variables from `ENVIRONMENT-MATRIX.md` using only Staging values.
+
+### `nexora-operations-staging`
+
+- Repository/branch/base/build/publish/Node: same as Admin Staging.
+- `NEXT_PUBLIC_APP_ENV=staging`
+- `NEXT_PUBLIC_APP_SURFACE=operations`
+- Add Staging Admin URL and Staging Supabase values.
+
+### Deploy Preview contexts
+
+- Enable **Project configuration → Build & deploy → Branches and deploy contexts → Deploy Previews → Any pull request against your production branch** on the two Staging sites.
+- Set Preview context `NEXT_PUBLIC_APP_ENV=preview`.
+- Preview Supabase URL/key must be Staging or an isolated Preview Branch; never inherit Production.
+- Enable password/SSO protection under **Project configuration → Visitor access** when available.
+
+Do not create/connect a Storefront Netlify site in this governance PR. Although `apps/storefront` now contains the preserved source, it is not approved until CI, migration reconciliation and a dedicated integration review pass.
 
 ## Variable templates
 

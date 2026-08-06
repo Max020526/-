@@ -57,6 +57,7 @@ test("adds browser security headers", async () => {
   assert.equal(response.headers.get("x-content-type-options"), "nosniff");
   assert.equal(response.headers.get("x-frame-options"), "DENY");
   assert.match(response.headers.get("strict-transport-security") ?? "", /max-age=31536000/);
+  assert.equal(response.headers.get("x-robots-tag"), "noindex, nofollow, noarchive");
 });
 
 test("renders the customer shop route", async () => {

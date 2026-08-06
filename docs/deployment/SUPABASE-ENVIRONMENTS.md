@@ -59,3 +59,25 @@ Configure Site URL and Redirect URLs separately in each project. Production cont
 5. Enable leaked-password protection and MFA policy for privileged Production accounts.
 6. Confirm Production backups/PITR and record a restore drill.
 7. Never use `supabase db reset --linked` on Production.
+
+## Current Advisor snapshot — 2026-08-06
+
+Production:
+
+- Security: 1 WARN, leaked-password protection disabled.
+- Performance: 168 INFO (167 unused-index notices plus one Auth connection notice). Do not remove indexes solely from a low-traffic snapshot.
+
+Staging:
+
+- Security: 8 WARN. Review anon/authenticated execution on `rpc_create_storefront_order`, `rpc_get_storefront_catalog`, `rpc_get_storefront_order` and authenticated execution on `rpc_merge_customer_cart`; leaked-password protection is also disabled.
+- Performance: 190 INFO, all unused-index notices.
+
+Console paths for both projects:
+
+1. **Authentication → URL Configuration**: Site URL and Redirect URLs must contain only that environment's Admin/Operations/Storefront domains.
+2. **Authentication → SMTP Settings**: Staging uses sandbox/test recipients; Production uses verified production SMTP.
+3. **Authentication → Sign In / Security**: enable leaked-password protection; require MFA for privileged Production users.
+4. **Storage**: verify buckets, MIME/size limits and policies; never copy Production objects into Staging.
+5. **Database → Advisors**: review Security and Performance findings after every approved migration.
+6. **Database → Backups** (Production): verify scheduled backups/PITR and record a restore rehearsal before release.
+7. **Project Settings → API/Data API**: verify explicit grants for tables/functions because new public objects may no longer be auto-exposed; RLS remains mandatory.
