@@ -23,4 +23,4 @@
 - remote reset/seed/DDL: 未执行
 - Netlify deploy: 未执行
 
-在 fresh replay、db lint、pgTAP、schema diff 和 Staging connector 只读复核全部通过前，数据库部署继续冻结。
+隔离 CI 的 fresh replay、db lint、pgTAP、类型生成和 schema diff 已全部通过。Staging connector 的当前对象只读复核仍未完成，因此数据库部署继续冻结。

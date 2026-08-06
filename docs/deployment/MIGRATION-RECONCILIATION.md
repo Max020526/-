@@ -32,3 +32,19 @@
 ## History policy
 
 保留远程独有 migration 的真实远程版本。共同 50 条的三方版本号仍不一致，所以任何已有远程项目都禁止 `db push`。本 PR优先建立可重放 Canonical migrations；history 对齐只能在对象级 parity、备份、审批和演练全部完成后单独决定。
+
+## Isolated CI evidence
+
+GitHub Actions run `31096427366` 在 2026-08-06 对 commit `05b1fdb` 完成隔离验证：
+
+- 61 条 migration 从空数据库顺序回放：通过。
+- tenant-aware reference seed：通过。
+- `supabase db lint --local --level error`：通过。
+- reconciliation、Phase 4、Phase 5、Phase 6 pgTAP：通过。
+- 本地 schema TypeScript 类型生成：通过。
+- migrations 对 fresh replay schema 的 diff：为空，通过。
+- canonical local schema artifact：已生成。
+- 应用 lint、typecheck、tests、build 与 Netlify build：通过。
+- secret scan 与 high/critical dependency gate：通过。
+
+该证据只证明 Git migrations 能在隔离空库构建 Canonical schema；不等于已对现有 Staging 或 Production 执行、修复或部署。
