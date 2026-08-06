@@ -52,7 +52,7 @@ export default function ProductOperationsPage() {
     const client = getSupabase(); if (!client) { setLoading(false); return; }
     setLoading(true);
     const [productResult, publicationResult, categoryResult, brandResult] = await Promise.all([
-      client.from("products").select("*,categories(name),brands(name),product_images(file_path,is_primary,deleted_at),product_variants(id)").is("deleted_at", null).order("updated_at", { ascending: false }).limit(500),
+      client.from("products").select("*,categories!products_category_id_fkey(name),brands!products_brand_id_fkey(name),product_images(file_path,is_primary,deleted_at),product_variants(id)").is("deleted_at", null).order("updated_at", { ascending: false }).limit(500),
       client.from("product_publications").select("product_id,status,validation_errors"),
       client.from("categories").select("id,name").eq("is_active", true).order("name"),
       client.from("brands").select("id,name").order("name"),
