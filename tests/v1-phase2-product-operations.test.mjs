@@ -74,4 +74,6 @@ test("phase 2 UI separates product operations from inventory mutation", async ()
   assert.doesNotMatch(create, /save_catalog_product|quantity_on_hand/);
   assert.match(list, /发布受阻/);
   assert.match(list, /rpc_bulk_update_products/);
+  assert.match(list, /categories!products_category_id_fkey\(name\)/);
+  assert.match(list, /brands!products_brand_id_fkey\(name\)/);
 });
