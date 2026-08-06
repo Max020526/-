@@ -1,7 +1,17 @@
 -- Legacy staff RPCs are superseded by same-origin server APIs.
-revoke execute on function public.rpc_create_staff_invitation(text,text,text,text) from authenticated;
-revoke execute on function public.rpc_list_staff_accounts() from authenticated;
-revoke execute on function public.rpc_update_staff_account(uuid,text,text,boolean) from authenticated;
+do $$
+begin
+  if to_regprocedure('public.rpc_create_staff_invitation(text,text,text,text)') is not null then
+    execute 'revoke execute on function public.rpc_create_staff_invitation(text,text,text,text) from authenticated';
+  end if;
+  if to_regprocedure('public.rpc_list_staff_accounts()') is not null then
+    execute 'revoke execute on function public.rpc_list_staff_accounts() from authenticated';
+  end if;
+  if to_regprocedure('public.rpc_update_staff_account(uuid,text,text,boolean)') is not null then
+    execute 'revoke execute on function public.rpc_update_staff_account(uuid,text,text,boolean) from authenticated';
+  end if;
+end;
+$$;
 
 create index if not exists employee_invitations_invited_by_idx on public.employee_invitations(invited_by);
 create index if not exists employee_invitations_role_idx on public.employee_invitations(role_id);

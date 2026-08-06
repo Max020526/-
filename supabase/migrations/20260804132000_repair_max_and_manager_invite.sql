@@ -13,7 +13,10 @@ begin
   from auth.users u join public.profiles p on p.id=u.id
   where lower(u.email)='xrx020526@gmail.com'
   limit 1;
-  if owner_id is null then raise exception 'MAX_OWNER_ACCOUNT_NOT_FOUND'; end if;
+  if owner_id is null then
+    raise notice 'MAX owner account not present; skipping production account repair';
+    return;
+  end if;
 
   select id into owner_role_id from public.roles where organization_id=owner_org and code='owner';
   select id into manager_role_id from public.roles where organization_id=owner_org and code='warehouse_manager';

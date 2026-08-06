@@ -6,6 +6,10 @@ const migration = await readFile(
   new URL("../supabase/migrations/20260801180000_phase3_storefront_orders.sql", import.meta.url),
   "utf8",
 );
+const wrapperHardening = await readFile(
+  new URL("../supabase/migrations/20260806071212_secure_storefront_order_rpc_wrappers.sql", import.meta.url),
+  "utf8",
+);
 
 test("phase 3 exposes only narrow storefront RPCs", () => {
   assert.match(migration, /rpc_get_storefront_catalog/);
@@ -34,4 +38,14 @@ test("expired reservations are released through a controlled function", () => {
   assert.match(migration, /status='expired'/);
   assert.match(migration, /quantity_reserved=quantity_reserved-reservation_row\.quantity/);
   assert.match(migration, /quantity_reserved>=reservation_row\.quantity/);
+});
+
+test("public storefront wrappers can reach private implementations without opening the private schema", () => {
+  for (const name of ["rpc_create_storefront_order", "rpc_get_storefront_order", "rpc_merge_customer_cart"]) {
+    assert.match(wrapperHardening, new RegExp(`function public\\.${name}[\\s\\S]*?security definer`, "i"));
+  }
+  assert.match(wrapperHardening, /revoke all on function public\.rpc_create_storefront_order[\s\S]*from public, anon, authenticated, service_role/i);
+  assert.match(wrapperHardening, /grant execute on function public\.rpc_create_storefront_order[\s\S]*to anon, authenticated, service_role/i);
+  assert.match(wrapperHardening, /grant execute on function public\.rpc_merge_customer_cart[\s\S]*to authenticated, service_role/i);
+  assert.doesNotMatch(wrapperHardening, /grant usage on schema private/i);
 });

@@ -108,7 +108,33 @@ jobs:
         run: supabase start
       - name: Replay every migration from zero
         run: supabase db reset
+      - name: Validate migration filenames and versions
+        run: |
+          test "$(find supabase/migrations -type f -name '*.sql' -print | sed 's#.*/##' | cut -d_ -f1 | sort | uniq -d | wc -l | tr -d ' ')" = "0"
+          test "$(find supabase/migrations -type f -name '*.sql' | wc -l | tr -d ' ')" -ge "60"
       - name: Lint database schema
         run: supabase db lint --local --level error
       - name: Run pgTAP/SQL tests
         run: supabase test db
+      - name: Generate database types from replayed schema
+        run: |
+          supabase gen types typescript --local --schema public > /tmp/database.types.ts
+          test -s /tmp/database.types.ts
+          grep -q "export type Database" /tmp/database.types.ts
+      - name: Verify migrations describe the replayed schema
+        run: |
+          supabase db diff --local --schema public > /tmp/schema-diff.sql
+          if test -s /tmp/schema-diff.sql; then
+            echo "Schema drift remains after fresh replay:"
+            cat /tmp/schema-diff.sql
+            exit 1
+          fi
+      - name: Export safe local schema artifact
+        run: supabase db dump --local --schema public --file /tmp/canonical-schema.sql
+      - uses: actions/upload-artifact@v4
+        with:
+          name: canonical-local-schema
+          path: |
+            /tmp/canonical-schema.sql
+            /tmp/database.types.ts
+          retention-days: 7

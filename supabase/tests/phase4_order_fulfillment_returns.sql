@@ -1,15 +1,48 @@
 -- Run against a linked development project. Every fixture is rolled back.
 begin;
-select set_config('request.jwt.claim.sub','07279ec0-cc56-478f-8e12-d94b87fe9683',true);
+create extension if not exists pgtap with schema extensions;
+select plan(1);
+
+insert into auth.users (id,email,email_confirmed_at,raw_user_meta_data)
+values (
+  '07279ec0-cc56-478f-8e12-d94b87fe9683',
+  'phase4-rollback@nexora.test',
+  now(),
+  '{"full_name":"Phase 4 rollback"}'::jsonb
+);
+
+update public.profiles
+set role='owner', is_active=true
+where id='07279ec0-cc56-478f-8e12-d94b87fe9683';
+
+insert into public.user_roles(user_id,role_id,assigned_by)
+select profile.id,role.id,profile.id
+from public.profiles profile
+join public.roles role on role.organization_id=profile.organization_id and role.code='owner'
+where profile.id='07279ec0-cc56-478f-8e12-d94b87fe9683'
+on conflict do nothing;
+
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"07279ec0-cc56-478f-8e12-d94b87fe9683","role":"authenticated"}',
+  true
+);
 do $test$
 declare
-  org uuid:='a2f4d0b3-c0c3-4906-b779-f2531ca556b9'; actor uuid:='07279ec0-cc56-478f-8e12-d94b87fe9683';
-  wh uuid:='1ffa366a-b83e-473d-8288-6b7db90fe889'; color uuid:='890a2300-9988-4182-8bcc-49f2d1b19b0a'; size_id uuid:='752a66c9-2e1b-4820-8dba-b72e733b7903';
+  org uuid; actor uuid:='07279ec0-cc56-478f-8e12-d94b87fe9683';
+  wh uuid; color uuid; size_id uuid;
   product_id uuid:=gen_random_uuid(); variant_id uuid:=gen_random_uuid(); inventory_id uuid:=gen_random_uuid(); model text;
   cancel_order uuid:=gen_random_uuid(); cancel_item uuid:=gen_random_uuid(); delivery_order uuid:=gen_random_uuid(); delivery_item uuid:=gen_random_uuid();
   pickup_order uuid:=gen_random_uuid(); pickup_item uuid:=gen_random_uuid(); return_id uuid:=gen_random_uuid(); return_item_id uuid:=gen_random_uuid();
   result jsonb; pickup_code text; refund_id uuid; on_hand integer; reserved integer; affected integer;
 begin
+  select organization_id into org from public.profiles where id=actor;
+  select id into wh from public.warehouses where organization_id=org and is_active order by created_at,id limit 1;
+  select id into color from public.colors where organization_id=org and is_active order by sort_order,id limit 1;
+  select id into size_id from public.sizes where organization_id=org and is_active order by sort_order,id limit 1;
+  if org is null or wh is null or color is null or size_id is null then
+    raise exception 'Phase 4 test fixture prerequisites missing';
+  end if;
   model:='P4-'||upper(substr(product_id::text,1,8));
   insert into public.products(id,organization_id,style_no,model_number,name,name_zh,workflow_status,created_by)
   values(product_id,org,model,model,'Phase 4 rollback test','第四阶段回滚测试','draft',actor);
@@ -92,5 +125,6 @@ begin
   if not exists(select 1 from public.orders where id=pickup_order and lifecycle_status='completed' and fulfillment_status='picked_up') then raise exception 'A10 pickup completion failed'; end if;
 end
 $test$;
-select 'A08-A10 passed inside rollback transaction' as result;
+select pass('A08-A10 passed inside rollback transaction');
+select * from finish();
 rollback;

@@ -1,13 +1,17 @@
 -- Development seed intentionally contains reference data only.
 -- Business records must be created through the application workflows.
 insert into public.categories
-  (name, slug, name_zh, name_en, name_it, sort_order, is_active)
-values
+  (organization_id, name, slug, name_zh, name_en, name_it, sort_order, is_active)
+select organization.id, seed.*
+from public.organizations organization
+cross join (values
   ('上装', 'tops', '上装', 'Tops', 'Top', 10, true),
   ('下装', 'bottoms', '下装', 'Bottoms', 'Pantaloni e gonne', 20, true),
   ('连衣裙', 'dresses', '连衣裙', 'Dresses', 'Abiti', 30, true),
   ('外套', 'outerwear', '外套', 'Outerwear', 'Capispalla', 40, true),
   ('配饰', 'accessories', '配饰', 'Accessories', 'Accessori', 50, true)
+) as seed(name, slug, name_zh, name_en, name_it, sort_order, is_active)
+where organization.code = 'NEXORA'
 on conflict (slug) do update
 set name_zh = excluded.name_zh,
     name_en = excluded.name_en,
@@ -15,14 +19,18 @@ set name_zh = excluded.name_zh,
     sort_order = excluded.sort_order,
     is_active = true;
 
-insert into public.sizes (name, normalized_name, sort_order, is_active)
-values ('ONE_SIZE', 'ONE_SIZE', 5, true)
+insert into public.sizes (organization_id, name, normalized_name, sort_order, is_active)
+select organization.id, 'ONE_SIZE', 'ONE_SIZE', 5, true
+from public.organizations organization
+where organization.code = 'NEXORA'
 on conflict (normalized_name) do update
 set is_active = true, sort_order = excluded.sort_order;
 
 insert into public.colors
-  (name, normalized_name, name_zh, name_en, name_it, code, hex_value, sort_order, is_active)
-values
+  (organization_id, name, normalized_name, name_zh, name_en, name_it, code, hex_value, sort_order, is_active)
+select organization.id, seed.*
+from public.organizations organization
+cross join (values
   ('黑色', '黑色', '黑色', 'Black', 'Nero', 'BLK', '#000000', 10, true),
   ('白色', '白色', '白色', 'White', 'Bianco', 'WHT', '#FFFFFF', 20, true),
   ('米白色', '米白色', '米白', 'Ivory', 'Avorio', 'IVY', '#FFFFF0', 30, true),
@@ -83,10 +91,15 @@ values
   ('梅子色', '梅子色', '梅子色', 'Plum', 'Prugna', 'PLM', '#8E4585', 580, true),
   ('古铜色', '古铜色', '古铜色', 'Bronze', 'Bronzo', 'BRZ', '#CD7F32', 590, true),
   ('透明', '透明', '透明', 'Transparent', 'Trasparente', 'CLR', '#E8E8E8', 600, true)
-on conflict (normalized_name) do update
-set name_zh = excluded.name_zh,
-    name_en = excluded.name_en,
-    name_it = excluded.name_it,
-    hex_value = excluded.hex_value,
-    sort_order = excluded.sort_order,
-    is_active = true;
+) as seed(name, normalized_name, name_zh, name_en, name_it, code, hex_value, sort_order, is_active)
+where organization.code = 'NEXORA'
+  and not exists (
+    select 1
+    from public.colors color
+    where color.organization_id = organization.id
+      and (
+        color.normalized_name = seed.normalized_name
+        or upper(color.code) = seed.code
+      )
+  )
+on conflict do nothing;
