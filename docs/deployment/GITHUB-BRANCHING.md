@@ -51,6 +51,8 @@ Set a required reviewer and prevent self-review on `production`. Restrict deploy
 
 Existing `main` protection blocks force push/deletion, enforces admins and requires conversation resolution. `develop` now has the same destructive-operation protections and requires the six GitHub CI checks emitted by this PR. Remaining actions:
 
+GitHub Dependency Graph, Secret Scanning and Push Protection are enabled for this public repository.
+
 1. Configure a second trusted reviewer before requiring approvals; a repository owner cannot approve their own PR.
 2. Add a required reviewer and `main` deployment-branch restriction to the `production` Environment.
 3. Restrict the `staging` Environment to `develop`.
