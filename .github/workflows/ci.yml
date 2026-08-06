@@ -125,7 +125,8 @@ jobs:
           npm run build:netlify
       - name: Record Storefront ownership by Draft architecture PR
         if: hashFiles('apps/storefront/package-lock.json') == ''
-        run: echo "apps/storefront is not present on develop; Draft PR #16 owns that integration."
+        run: |
+          echo "apps/storefront is not present on develop; the Draft architecture PR owns that integration."
 
   database:
     name: Migration and database tests

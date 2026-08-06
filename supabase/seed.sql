@@ -93,10 +93,13 @@ cross join (values
   ('透明', '透明', '透明', 'Transparent', 'Trasparente', 'CLR', '#E8E8E8', 600, true)
 ) as seed(name, normalized_name, name_zh, name_en, name_it, code, hex_value, sort_order, is_active)
 where organization.code = 'NEXORA'
-on conflict (normalized_name) do update
-set name_zh = excluded.name_zh,
-    name_en = excluded.name_en,
-    name_it = excluded.name_it,
-    hex_value = excluded.hex_value,
-    sort_order = excluded.sort_order,
-    is_active = true;
+  and not exists (
+    select 1
+    from public.colors color
+    where color.organization_id = organization.id
+      and (
+        color.normalized_name = seed.normalized_name
+        or upper(color.code) = seed.code
+      )
+  )
+on conflict do nothing;
