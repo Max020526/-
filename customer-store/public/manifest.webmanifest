@@ -1,0 +1,11 @@
+{
+  "name": "NEXORA 商城",
+  "short_name": "NEXORA",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f7f8fc",
+  "theme_color": "#0e1726",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

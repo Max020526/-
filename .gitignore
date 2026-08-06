@@ -38,11 +38,9 @@ yarn-error.log*
 # typescript
 next-env.d.ts
 /dist/
+/customer-store/dist/
 /.wrangler/
 /outputs/
 /work/
 /tmp/
 *.tsbuildinfo
-
-# Standalone customer storefront is maintained as its own repository.
-/customer-store/

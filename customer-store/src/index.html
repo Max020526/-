@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0e1726">
+  <meta name="description" content="NEXORA 官方商城">
+  <title>NEXORA 商城</title>
+  <link rel="icon" href="/icon.svg" type="image/svg+xml">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app-config.js" defer></script>
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <header class="site-header">
+    <a class="brand" href="#top" aria-label="NEXORA 商城首页">
+      <img src="/icon.svg" alt="" width="42" height="42">
+      <span>NEXORA</span>
+    </a>
+    <nav aria-label="商城导航">
+      <a href="#catalog">商品</a>
+      <button class="nav-button" id="orderLookupButton" type="button">查订单</button>
+      <button class="cart-button" id="cartButton" type="button" aria-label="打开购物袋">购物袋 <span id="cartCount">0</span></button>
+    </nav>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <div>
+        <p class="eyebrow">NEXORA ONLINE STORE</p>
+        <h1>新款，简单选购</h1>
+        <p class="hero-copy">查看实时库存，选择颜色与尺码，快速完成下单。</p>
+        <a class="primary-link" href="#catalog">开始选购</a>
+      </div>
+      <div class="hero-mark" aria-hidden="true">N</div>
+    </section>
+
+    <section class="catalog-section" id="catalog">
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">商城商品</p>
+          <h2>全部商品</h2>
+        </div>
+        <label class="search-field">
+          <span>搜索</span>
+          <input id="searchInput" type="search" placeholder="型号或名称" autocomplete="off">
+        </label>
+      </div>
+      <div class="notice hidden" id="storeNotice" role="status"></div>
+      <div class="product-grid" id="productGrid" aria-live="polite">
+        <div class="loading-card">正在加载商品…</div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span>NEXORA</span>
+    <span>官方商城 · 价格与库存实时更新</span>
+  </footer>
+
+  <div class="drawer-backdrop hidden" id="drawerBackdrop"></div>
+  <aside class="cart-drawer" id="cartDrawer" aria-hidden="true" aria-labelledby="cartTitle">
+    <div class="drawer-head">
+      <h2 id="cartTitle">购物袋</h2>
+      <button class="icon-button" id="closeCartButton" type="button" aria-label="关闭购物袋">×</button>
+    </div>
+    <div class="cart-items" id="cartItems"></div>
+    <div class="cart-summary">
+      <div><span>商品小计</span><strong id="cartSubtotal">€0.00</strong></div>
+      <button class="primary-button" id="checkoutButton" type="button">填写订单</button>
+    </div>
+  </aside>
+
+  <dialog id="checkoutDialog">
+    <form id="checkoutForm">
+      <div class="dialog-head">
+        <div>
+          <p class="eyebrow">确认订单</p>
+          <h2>收货信息</h2>
+        </div>
+        <button class="icon-button" type="button" data-close-dialog="checkoutDialog" aria-label="关闭">×</button>
+      </div>
+      <div class="form-grid">
+        <label><span>姓名</span><input name="full_name" required maxlength="120" autocomplete="name"></label>
+        <label><span>邮箱</span><input name="email" type="email" required maxlength="254" autocomplete="email"></label>
+        <label><span>电话</span><input name="phone" type="tel" required maxlength="40" autocomplete="tel"></label>
+        <label><span>配送方式</span><select name="fulfillment_method"><option value="DELIVERY">配送</option><option value="PICKUP">到店自提</option></select></label>
+        <label class="delivery-field"><span>国家</span><input name="country" value="Italy" maxlength="80" autocomplete="country-name"></label>
+        <label class="delivery-field"><span>城市</span><input name="city" maxlength="100" autocomplete="address-level2"></label>
+        <label class="delivery-field"><span>邮编</span><input name="postal_code" maxlength="20" autocomplete="postal-code"></label>
+        <label class="delivery-field full"><span>地址</span><input name="address_line" maxlength="180" autocomplete="street-address"></label>
+        <label class="full"><span>备注（可选）</span><textarea name="customer_note" maxlength="500" rows="3"></textarea></label>
+      </div>
+      <div class="dialog-total"><span>商品小计</span><strong id="checkoutSubtotal">€0.00</strong></div>
+      <p class="form-message" id="checkoutMessage" role="alert"></p>
+      <button class="primary-button" id="submitOrderButton" type="submit">提交订单</button>
+    </form>
+  </dialog>
+
+  <dialog id="orderDialog">
+    <form id="orderLookupForm">
+      <div class="dialog-head">
+        <div><p class="eyebrow">订单查询</p><h2>查看订单</h2></div>
+        <button class="icon-button" type="button" data-close-dialog="orderDialog" aria-label="关闭">×</button>
+      </div>
+      <label><span>订单 ID</span><input name="order_id" required placeholder="下单后自动保存"></label>
+      <label><span>查询凭证</span><input name="lookup_token" required placeholder="下单后自动保存"></label>
+      <p class="form-message" id="orderMessage" role="alert"></p>
+      <button class="primary-button" type="submit">查询</button>
+      <div class="order-result hidden" id="orderResult"></div>
+    </form>
+  </dialog>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "nexora-customer-store",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "build:netlify": "node scripts/build.mjs",
+    "lint": "node scripts/validate-source.mjs",
+    "typecheck": "node scripts/validate-source.mjs",
+    "test": "node --test tests/storefront.test.mjs",
+    "verify:environment": "node scripts/verify-deployment-environment.mjs"
+  }
+}
