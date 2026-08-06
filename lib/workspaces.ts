@@ -1,7 +1,8 @@
 import type { LucideIcon } from "lucide-react";
 import { Boxes, Calculator, CircleDollarSign, ClipboardCheck, ExternalLink, PackageCheck, Settings, ShoppingBag, Store, Truck, Users } from "lucide-react";
 
-export const RETAIL_STOREFRONT_URL = "https://nexora-studio-shop.xrx020526.chatgpt.site";
+export const RETAIL_STOREFRONT_URL = process.env.NEXT_PUBLIC_RETAIL_STOREFRONT_URL?.trim()
+  || "https://nexora-studio-shop.xrx020526.chatgpt.site";
 export type FrontendProduct = { id: "warehouse-pos" | "internal-admin" | "retail-storefront"; title: string; href: string; external?: boolean; tone: "mint" | "blue" | "amber"; icon: LucideIcon };
 export const FRONTEND_PRODUCTS: FrontendProduct[] = [
   { id: "warehouse-pos", title: "仓库", href: "/warehouse", tone: "mint", icon: PackageCheck },

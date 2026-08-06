@@ -7,7 +7,7 @@ NEXORA 是一个统一数据库、多职责工作区的服装零售商业平台�
 - Next.js 16、React 19、TypeScript、Tailwind CSS、App Router
 - Supabase PostgreSQL、Auth、Storage、RLS、PostgreSQL RPC
 - Netlify 构建准备；数据库使用 Supabase Cloud
-- 独立顾客商城位于 `customer-store/`，与内部端共用同一 Supabase 数据库，但使用独立 Git 仓库
+- 独立顾客商城位于 `customer-store/`，与内部端共用同一 Supabase 数据库，并作为独立 Netlify Site 构建和发布
 
 ## 工作区
 

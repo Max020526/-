@@ -7,6 +7,7 @@ const hosted = {
   NEXT_PUBLIC_SUPABASE_URL: "https://previewref.supabase.co",
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_example",
   NEXT_PUBLIC_SITE_URL: "https://preview.example.com",
+  NEXT_PUBLIC_INTERNAL_API_URL: "https://preview-system.example.com",
   PRODUCTION_SUPABASE_PROJECT_REF: "productionref",
 };
 
