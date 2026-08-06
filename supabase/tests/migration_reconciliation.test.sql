@@ -344,6 +344,8 @@ select throws_ok(
       'migration-replay-rollback'
     );
   $failed_inbound$,
+  'P0001',
+  '所选颜色已停用或没有SKU代码',
   'a failed multi-line inbound raises and rolls back'
 );
 

@@ -1,5 +1,33 @@
 begin;
 
+create extension if not exists pgtap with schema extensions;
+select plan(1);
+
+insert into auth.users (id,email,email_confirmed_at,raw_user_meta_data)
+values (
+  '07279ec0-cc56-478f-8e12-d94b87fe9683',
+  'phase5-rollback@nexora.test',
+  now(),
+  '{"full_name":"Phase 5 rollback"}'::jsonb
+);
+
+update public.profiles
+set role='owner', is_active=true
+where id='07279ec0-cc56-478f-8e12-d94b87fe9683';
+
+insert into public.user_roles(user_id,role_id,assigned_by)
+select profile.id,role.id,profile.id
+from public.profiles profile
+join public.roles role on role.organization_id=profile.organization_id and role.code='owner'
+where profile.id='07279ec0-cc56-478f-8e12-d94b87fe9683'
+on conflict do nothing;
+
+select set_config(
+  'request.jwt.claims',
+  '{"sub":"07279ec0-cc56-478f-8e12-d94b87fe9683","role":"authenticated"}',
+  true
+);
+
 do $$
 declare
   actor_id uuid:='07279ec0-cc56-478f-8e12-d94b87fe9683'; organization_value uuid; warehouse_value uuid; supplier_value uuid;
@@ -66,4 +94,5 @@ $$;
 
 rollback;
 
-select 'A11-A13 passed inside rollback transaction' as result;
+select pass('A11-A13 passed inside rollback transaction');
+select * from finish();

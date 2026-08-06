@@ -3,6 +3,9 @@
 
 begin;
 
+create extension if not exists pgtap with schema extensions;
+select plan(1);
+
 do $$
 declare
   missing_tables text[];
@@ -50,4 +53,6 @@ begin
   ) then raise exception 'browser roles can mutate an append-only ledger'; end if;
 end $$;
 
+select pass('Phase 6 metadata, RLS, immutable ledger, view and grant checks pass');
+select * from finish();
 rollback;
