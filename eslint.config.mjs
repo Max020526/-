@@ -22,6 +22,7 @@ const eslintConfig = defineConfig([
     ".vinext/**",
     "dist/**",
     "customer-store/**",
+    "apps/storefront/**",
     "out/**",
     "build/**",
     "next-env.d.ts",

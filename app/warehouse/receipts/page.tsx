@@ -50,22 +50,24 @@ export default function Receipts() {
 
     if (result.error) return { data: null, error: result.error };
 
-    const rows: UnifiedReceipt[] = (result.data as CanonicalReceipt[]).map((row) => {
+    const rows: UnifiedReceipt[] = (result.data as CanonicalReceipt[]).flatMap((row) => {
+      if (!row.id) return [];
       const source = row.source_mode === "quick" ? "quick" : "controlled";
-      return {
+      const status = row.status ?? "draft";
+      return [{
         id: row.id,
-        number: row.receipt_no,
-        createdAt: row.created_at,
-        businessDate: row.arrival_date,
+        number: row.receipt_no ?? "—",
+        createdAt: row.created_at ?? row.arrival_date ?? "",
+        businessDate: row.arrival_date ?? "",
         source,
-        party: row.party,
-        warehouse: row.location_name,
-        expectedQuantity: row.expected_quantity,
-        receivedQuantity: row.received_quantity,
-        status: row.status,
-        statusLabel: STATUS_LABELS[row.status] ?? row.status,
+        party: row.party ?? "—",
+        warehouse: row.location_name ?? "—",
+        expectedQuantity: row.expected_quantity ?? 0,
+        receivedQuantity: row.received_quantity ?? 0,
+        status,
+        statusLabel: STATUS_LABELS[status] ?? status,
         href: source === "quick" ? `/inbound/${row.id}` : `/warehouse/receipts/${row.id}/parse`,
-      };
+      }];
     });
     return { data: rows, error: null };
   }, []);

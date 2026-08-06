@@ -42,9 +42,11 @@ export function ProductImageManager({ productId, productName, images, onChanged,
         const { error } = await client.storage.from("product-images").upload(path, file, { contentType: file.type });
         if (error) throw error;
         const first = images.length === 0 && index === 0;
+        // The SQL function requires the argument but intentionally accepts NULL for product-level media.
+        const productLevelVariant = null as unknown as string;
         const { error: dbError } = await client.rpc("rpc_register_product_media", {
           p_product_id: productId,
-          p_variant_id: null,
+          p_variant_id: productLevelVariant,
           p_storage_path: path,
           p_mime_type: file.type,
           p_file_size: file.size,

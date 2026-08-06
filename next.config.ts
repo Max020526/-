@@ -21,6 +21,10 @@ const contentSecurityPolicy = [
   "upgrade-insecure-requests",
 ].join("; ");
 
+const appEnvironment = process.env.NEXT_PUBLIC_APP_ENV ?? "local";
+const appSurface = process.env.NEXT_PUBLIC_APP_SURFACE ?? "admin";
+const blockIndexing = appEnvironment !== "production" || appSurface !== "storefront";
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   reactStrictMode: true,
@@ -37,6 +41,7 @@ const nextConfig: NextConfig = {
         { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
         { key: "X-DNS-Prefetch-Control", value: "off" },
         { key: "Origin-Agent-Cluster", value: "?1" },
+        ...(blockIndexing ? [{ key: "X-Robots-Tag", value: "noindex, nofollow, noarchive" }] : []),
       ],
     }];
   },

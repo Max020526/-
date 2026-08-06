@@ -1,0 +1,5 @@
+# Replace or add additional trusted maintainers before enabling required review.
+* @Max020526
+/supabase/migrations/ @Max020526
+/.github/workflows/ @Max020526
+/docs/deployment/ @Max020526
