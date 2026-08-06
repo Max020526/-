@@ -7,7 +7,7 @@ const migration = await readFile(
   "utf8",
 );
 const wrapperHardening = await readFile(
-  new URL("../supabase/migrations/20260806071117_secure_storefront_order_rpc_wrappers.sql", import.meta.url),
+  new URL("../supabase/migrations/20260806071212_secure_storefront_order_rpc_wrappers.sql", import.meta.url),
   "utf8",
 );
 

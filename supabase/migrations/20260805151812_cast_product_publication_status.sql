@@ -24,10 +24,17 @@ begin
   );
 
   if repaired = definition then
-    raise exception 'private.publish_product_channel did not contain the expected status assignment';
+    if position(
+      $fixed$status=(case when publication_status='published' then 'PUBLISHED' else 'READY_TO_PUBLISH' end)::public.product_status,$fixed$
+      in definition
+    ) > 0 then
+      raise notice 'private.publish_product_channel already contains the enum cast';
+    else
+      raise exception 'private.publish_product_channel did not contain the expected status assignment';
+    end if;
+  else
+    execute repaired;
   end if;
-
-  execute repaired;
 end
 $migration$;
 

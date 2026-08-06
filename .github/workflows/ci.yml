@@ -1,0 +1,140 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [develop, main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pr-policy:
+    name: PR policy
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enforce release flow
+        env:
+          BASE: ${{ github.base_ref }}
+          HEAD: ${{ github.head_ref }}
+        run: |
+          if [ "$BASE" = "main" ] && [ "$HEAD" != "develop" ] && [[ "$HEAD" != hotfix/* ]]; then
+            echo "Only develop or hotfix/* may target main."
+            exit 1
+          fi
+          if [ "$BASE" = "develop" ] && [[ ! "$HEAD" =~ ^(feature|fix|hotfix|chore|docs)/ ]]; then
+            echo "Branches targeting develop must use an approved prefix."
+            exit 1
+          fi
+
+  quality:
+    name: Code quality and builds
+    runs-on: ubuntu-latest
+    env:
+      CI: "true"
+      CONTEXT: deploy-preview
+      NEXT_PUBLIC_APP_ENV: preview
+      NEXT_PUBLIC_APP_SURFACE: admin
+      NEXT_PUBLIC_APP_NAME: NEXORA Admin Preview
+      NEXT_PUBLIC_SUPABASE_URL: https://ci-preview.supabase.co
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_placeholder
+      NEXT_PUBLIC_SITE_URL: https://deploy-preview-1--nexora-admin-staging.netlify.app
+      NEXT_PUBLIC_ADMIN_URL: https://deploy-preview-1--nexora-admin-staging.netlify.app
+      NEXT_PUBLIC_OPERATIONS_URL: https://deploy-preview-1--nexora-operations-staging.netlify.app
+      NEXT_PUBLIC_STOREFRONT_URL: https://deploy-preview-1--nexora-storefront-staging.netlify.app
+      PRODUCTION_SUPABASE_PROJECT_REF: ci-production
+      STAGING_SUPABASE_PROJECT_REF: ci-staging
+      PREVIEW_SUPABASE_PROJECT_REF: ci-preview
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.0
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test
+      - run: npm run build:netlify
+
+  storefront:
+    name: Storefront quality and build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/storefront
+    env:
+      CI: "true"
+      CONTEXT: deploy-preview
+      NEXT_PUBLIC_APP_ENV: preview
+      NEXT_PUBLIC_APP_SURFACE: storefront
+      NEXT_PUBLIC_APP_NAME: NEXORA Storefront Preview
+      NEXT_PUBLIC_SUPABASE_URL: https://ci-preview.supabase.co
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_placeholder
+      NEXT_PUBLIC_SITE_URL: https://deploy-preview-1--nexora-storefront-staging.netlify.app
+      NEXT_PUBLIC_ADMIN_URL: https://deploy-preview-1--nexora-admin-staging.netlify.app
+      NEXT_PUBLIC_STOREFRONT_URL: https://deploy-preview-1--nexora-storefront-staging.netlify.app
+      PRODUCTION_SUPABASE_PROJECT_REF: ci-production
+      STAGING_SUPABASE_PROJECT_REF: ci-staging
+      PREVIEW_SUPABASE_PROJECT_REF: ci-preview
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.0
+          cache: npm
+          cache-dependency-path: apps/storefront/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test
+      - run: npm run verify:environment
+      - run: npm run build:netlify
+
+  database:
+    name: Migration and database tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.111.0
+      - name: Start isolated local Supabase
+        run: supabase start
+      - name: Replay every migration from zero
+        run: supabase db reset
+      - name: Validate migration filenames and versions
+        run: |
+          test "$(find supabase/migrations -type f -name '*.sql' -print | sed 's#.*/##' | cut -d_ -f1 | sort | uniq -d | wc -l | tr -d ' ')" = "0"
+          test "$(find supabase/migrations -type f -name '*.sql' | wc -l | tr -d ' ')" -ge "60"
+      - name: Lint database schema
+        run: supabase db lint --local --level error
+      - name: Run pgTAP/SQL tests
+        run: supabase test db
+      - name: Generate database types from replayed schema
+        run: |
+          supabase gen types typescript --local --schema public > /tmp/database.types.ts
+          test -s /tmp/database.types.ts
+          grep -q "export type Database" /tmp/database.types.ts
+      - name: Verify migrations describe the replayed schema
+        run: |
+          supabase db diff --local --schema public > /tmp/schema-diff.sql
+          if test -s /tmp/schema-diff.sql; then
+            echo "Schema drift remains after fresh replay:"
+            cat /tmp/schema-diff.sql
+            exit 1
+          fi
+      - name: Export safe local schema artifact
+        run: supabase db dump --local --schema public --file /tmp/canonical-schema.sql
+      - uses: actions/upload-artifact@v4
+        with:
+          name: canonical-local-schema
+          path: |
+            /tmp/canonical-schema.sql
+            /tmp/database.types.ts
+          retention-days: 7
