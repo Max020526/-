@@ -44,3 +44,6 @@ next-env.d.ts
 /work/
 /tmp/
 *.tsbuildinfo
+
+# Local Netlify folder
+.netlify
