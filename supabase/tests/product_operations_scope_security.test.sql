@@ -241,10 +241,10 @@ reset role;
 set local role anon;
 select set_config('request.jwt.claims','{"role":"anon"}',true);
 
-select is(
-  (select count(*)::integer from public.products where id='22222222-2222-4222-8222-222222222221'),
-  0,
-  'anonymous users cannot read unclassified products'
+select throws_ok(
+  $$select count(*) from public.products where id='22222222-2222-4222-8222-222222222221'$$,
+  '42501','permission denied for table products',
+  'anonymous users have no table privilege for internal unclassified products'
 );
 
 reset role;
