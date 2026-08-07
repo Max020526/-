@@ -9,6 +9,7 @@ async function source(relativePath) {
 const schema = await source("supabase/migrations/20260801170000_phase2_product_operations.sql");
 const rpc = await source("supabase/migrations/20260801171000_phase2_product_operations_rpc.sql");
 const media = await source("supabase/migrations/20260801172000_phase2_media_public_boundary.sql");
+const scopeSecurity = await source("supabase/migrations/20260807131039_fix_product_operations_scope_security.sql");
 
 test("phase 2 adds channel-aware pricing and publication records without duplicating products", () => {
   for (const table of ["channels", "price_books", "price_book_items", "product_publications"]) {
@@ -29,6 +30,57 @@ test("product operations writes use controlled functions and cannot mutate inven
   assert.doesNotMatch(rpc, /insert into public\.inventory_movements\b/i);
   assert.match(rpc, /revoke execute on function public\.save_catalog_product/i);
   assert.match(rpc, /revoke execute on function public\.publish_product/i);
+});
+
+test("product operations scope repair protects unclassified and out-of-scope products", () => {
+  assert.match(scopeSecurity, /private\.has_product_operations_scope\(required_category_id uuid\)/i);
+  assert.match(scopeSecurity, /private\.can_view_product_for_operations\(target_product_id uuid\)/i);
+  assert.match(scopeSecurity, /private\.can_edit_product_for_operations\(target_product_id uuid\)/i);
+  assert.match(scopeSecurity, /when required_category_id is null[\s\S]*private\.has_permission\('product\.edit'\)/i);
+  assert.match(scopeSecurity, /private\.has_permission\('product\.view'\)[\s\S]*private\.has_product_operations_scope\(category_id\)/i);
+  assert.match(scopeSecurity, /private\.has_product_operations_scope\(product_value\.category_id\)/i);
+  assert.match(scopeSecurity, /not private\.has_category_access\(category_value\)/i);
+  assert.match(scopeSecurity, /subcategory\.parent_id = category_value/i);
+  assert.doesNotMatch(scopeSecurity, /has_category_access\(required_category_id uuid\)[\s\S]*required_category_id is null then true/i);
+});
+
+test("all Product Operations SECURITY DEFINER entry points enforce product scope", () => {
+  const scopedFunctions = {
+    create_product_draft: /has_permission\('product\.create'\)[\s\S]*has_category_access\(category_value\)/i,
+    upsert_product_variant: /has_permission\('sku\.edit'\)[\s\S]*can_edit_product_for_operations\(p_product_id\)/i,
+    set_product_channel_price: /has_permission\('product\.price\.edit'\)[\s\S]*can_view_product_for_operations\(p_product_id\)/i,
+    validate_product_publication: /has_permission\('product\.publish'\)[\s\S]*can_view_product_for_operations\(p_product_id\)/i,
+    publish_product_channel: /has_permission\('product\.publish'\)[\s\S]*can_view_product_for_operations\(p_product_id\)/i,
+    unpublish_product_channel: /has_permission\('product\.unpublish'\)[\s\S]*can_view_product_for_operations\(p_product_id\)/i,
+    bulk_update_products: /has_permission\('product\.edit'\)[\s\S]*has_product_operations_scope\(product\.category_id\)/i,
+  };
+
+  for (const [name, authorization] of Object.entries(scopedFunctions)) {
+    const start = scopeSecurity.indexOf(`create or replace function private.${name}`);
+    assert.notEqual(start, -1, `${name} is redefined in the security migration`);
+    const next = scopeSecurity.indexOf("create or replace function private.", start + 1);
+    const body = scopeSecurity.slice(start, next === -1 ? undefined : next);
+    assert.match(body, /security definer/i);
+    assert.match(body, /set search_path = ''/i);
+    assert.match(body, /auth\.uid\(\)/i);
+    assert.match(body, authorization);
+  }
+
+  assert.match(scopeSecurity, /target_category_id[\s\S]*has_category_access\(target_category_id\)/i);
+  assert.match(scopeSecurity, /matched_count <> requested_count[\s\S]*raise exception/i);
+  assert.match(scopeSecurity, /批量商品包含当前账号无权编辑的分类/i);
+  assert.match(scopeSecurity, /private\.save_catalog_product\(uuid,jsonb,jsonb\)[\s\S]*private\.publish_product\(uuid\)[\s\S]*private\.unpublish_product\(uuid\)/i);
+  assert.match(scopeSecurity, /revoke all on function %s from public, anon, authenticated, service_role/i);
+  assert.doesNotMatch(scopeSecurity, /if not found then continue/i);
+});
+
+test("product media SECURITY DEFINER functions enforce product category scope", () => {
+  assert.match(scopeSecurity, /private\.can_manage_product_media\(target_product_id uuid\)/i);
+  for (const name of ["register_product_media", "soft_delete_product_media", "manage_product_image"]) {
+    assert.match(scopeSecurity, new RegExp(`private\\.${name}[\\s\\S]*private\\.can_manage_product_media\\(p_product_id\\)`, "i"));
+  }
+  assert.match(scopeSecurity, /revoke all on function private\.register_product_media[\s\S]*from public, anon, authenticated, service_role/i);
+  assert.match(scopeSecurity, /grant execute on function private\.register_product_media[\s\S]*to authenticated/i);
 });
 
 test("publication validation is channel-specific and field-specific", () => {
@@ -74,4 +126,9 @@ test("phase 2 UI separates product operations from inventory mutation", async ()
   assert.doesNotMatch(create, /save_catalog_product|quantity_on_hand/);
   assert.match(list, /发布受阻/);
   assert.match(list, /rpc_bulk_update_products/);
+  assert.match(list, /categories!products_category_id_fkey/);
+  assert.match(list, /brands!products_brand_id_fkey/);
+  assert.match(list, /未分类/);
+  assert.match(list, /商品队列加载失败/);
+  assert.doesNotMatch(list, /\.select\("\*,categories\(name\),brands\(name\)/);
 });
