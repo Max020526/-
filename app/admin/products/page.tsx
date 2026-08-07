@@ -18,7 +18,7 @@ type ProductRow = {
   id: string; style_no: string; name: string | null; name_zh: string | null; name_it?: string | null; name_en?: string | null;
   workflow_status?: string; status: string; category_id: string | null; brand_id?: string | null; supplier_id?: string | null;
   is_featured?: boolean; created_at: string; updated_at: string;
-  categories?: { name: string } | null; brands?: { name: string } | null;
+  category?: { name: string } | null; brand?: { name: string } | null;
   product_images?: Array<{ file_path: string; is_primary: boolean; deleted_at?: string | null }>;
   product_variants?: Array<{ id: string }>;
 };
@@ -47,18 +47,25 @@ export default function ProductOperationsPage() {
   const [loading, setLoading] = useState(true);
   const [working, setWorking] = useState(false);
   const [message, setMessage] = useState("");
+  const [loadFailed, setLoadFailed] = useState(false);
 
   const load = useCallback(async () => {
     const client = getSupabase(); if (!client) { setLoading(false); return; }
-    setLoading(true);
+    setLoading(true); setLoadFailed(false);
     const [productResult, publicationResult, categoryResult, brandResult] = await Promise.all([
-      client.from("products").select("*,categories(name),brands(name),product_images(file_path,is_primary,deleted_at),product_variants(id)").is("deleted_at", null).order("updated_at", { ascending: false }).limit(500),
+      client.from("products").select("*,category:categories!products_category_id_fkey(name),brand:brands!products_brand_id_fkey(name),product_images(file_path,is_primary,deleted_at),product_variants(id)").is("deleted_at", null).order("updated_at", { ascending: false }).limit(500),
       client.from("product_publications").select("product_id,status,validation_errors"),
       client.from("categories").select("id,name").eq("is_active", true).order("name"),
       client.from("brands").select("id,name").order("name"),
     ]);
-    if (productResult.error) setMessage(friendlyError(productResult.error, "商品队列读取失败。"));
-    setProducts((productResult.data ?? []) as unknown as ProductRow[]);
+    if (productResult.error) {
+      setLoadFailed(true);
+      setMessage(friendlyError(productResult.error, "商品队列读取失败，请稍后重试。"));
+      setProducts([]);
+      if (process.env.NODE_ENV !== "production") console.error("Product operations queue query failed", productResult.error);
+    } else {
+      setProducts((productResult.data ?? []) as unknown as ProductRow[]);
+    }
     setPublications((publicationResult.data ?? []) as PublicationRow[]);
     setCategories(categoryResult.data ?? []); setBrands(brandResult.data ?? []);
     setLoading(false);
@@ -116,11 +123,11 @@ export default function ProductOperationsPage() {
     {selected.length > 0 && <section className="form-card" style={{ marginBottom: 16 }}><div className="form-actions"><strong>已选择 {selected.length} 个</strong><button className="button" disabled={working} onClick={() => bulk("set_featured", "true")}><Sparkles size={14}/>设为推荐</button><select aria-label="批量分类" defaultValue="" onChange={(event) => { if (event.target.value) void bulk("set_category", event.target.value); }}><option value="">批量修改分类…</option>{categories.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select><button className="button danger" disabled={working} onClick={() => bulk("archive")}><Archive size={14}/>归档并下架</button></div></section>}
     <section className="panel">
       <div className="panel-head"><div><h2>{queueLabels[queue] ?? "商品"}</h2><p>共 {filtered.length} 个商品</p></div><button className="button small" onClick={() => downloadCsv(`nexora-product-operations-${new Date().toISOString().slice(0, 10)}.csv`, ["型号","中文名称","意大利语名称","英语名称","工作流状态","SKU 数","更新时间"], filtered.map((product) => [product.style_no, product.name_zh || product.name || "", product.name_it || "", product.name_en || "", product.workflow_status || product.status, product.product_variants?.length ?? 0, product.updated_at]))}><Download size={14}/>导出 CSV</button></div>
-      {loading ? <div className="empty"><LoaderCircle/></div> : visible.length ? <div className="table-wrap"><table className="data-table" style={{ minWidth: 960 }}><thead><tr><th><input type="checkbox" aria-label="选择本页" checked={visible.length > 0 && visible.every((item) => selected.includes(item.id))} onChange={(event) => setSelected(event.target.checked ? [...new Set([...selected, ...visible.map((item) => item.id)])] : selected.filter((id) => !visible.some((item) => item.id === id)))}/></th><th>主图</th><th>型号 / 名称</th><th>分类 / 品牌</th><th>SKU</th><th>工作流</th><th>渠道</th><th>更新时间</th><th></th></tr></thead><tbody>{visible.map((product) => {
+      {loading ? <div className="empty"><LoaderCircle/></div> : loadFailed ? <div className="empty"><div><EmptyState title="商品队列加载失败" description="系统没有返回空队列，请检查权限或网络后重试。"/><button className="button" onClick={() => void load()}>重新加载</button></div></div> : visible.length ? <div className="table-wrap"><table className="data-table" style={{ minWidth: 960 }}><thead><tr><th><input type="checkbox" aria-label="选择本页" checked={visible.length > 0 && visible.every((item) => selected.includes(item.id))} onChange={(event) => setSelected(event.target.checked ? [...new Set([...selected, ...visible.map((item) => item.id)])] : selected.filter((id) => !visible.some((item) => item.id === id)))}/></th><th>主图</th><th>型号 / 名称</th><th>分类 / 品牌</th><th>SKU</th><th>工作流</th><th>渠道</th><th>更新时间</th><th></th></tr></thead><tbody>{visible.map((product) => {
         const image = product.product_images?.find((item) => item.is_primary && !item.deleted_at) ?? product.product_images?.find((item) => !item.deleted_at);
         const workflow = product.workflow_status ?? product.status;
         const publicationCount = publications.filter((item) => item.product_id === product.id && item.status === "published").length;
-        return <tr key={product.id}><td><input type="checkbox" checked={selected.includes(product.id)} onChange={(event) => setSelected((current) => event.target.checked ? [...current, product.id] : current.filter((id) => id !== product.id))}/></td><td>{image ? <SecureProductImage path={image.file_path} alt={product.name_zh || product.style_no}/> : <div className="empty-icon" style={{ width: 42, height: 42, margin: 0 }}>—</div>}</td><td><strong>{product.style_no}</strong><div>{product.name_zh || product.name || <span className="muted">待命名</span>}</div></td><td>{product.categories?.name || "—"}<div className="muted">{product.brands?.name || "无品牌"}</div></td><td>{product.product_variants?.length ?? 0}</td><td><StatusBadge value={workflow} label={blockedIds.has(product.id) ? "发布受阻" : workflow}/></td><td>{publicationCount} 个已发布</td><td>{new Date(product.updated_at).toLocaleDateString("zh-CN")}</td><td><Link href={`/admin/products/${product.id}`} aria-label="打开商品"><ArrowRight size={15}/></Link></td></tr>;
+        return <tr key={product.id}><td><input type="checkbox" checked={selected.includes(product.id)} onChange={(event) => setSelected((current) => event.target.checked ? [...current, product.id] : current.filter((id) => id !== product.id))}/></td><td>{image ? <SecureProductImage path={image.file_path} alt={product.name_zh || product.style_no}/> : <div className="empty-icon" style={{ width: 42, height: 42, margin: 0 }}>—</div>}</td><td><strong>{product.style_no}</strong><div>{product.name_zh || product.name || <span className="muted">待命名</span>}</div></td><td>{product.category?.name || "未分类"}<div className="muted">{product.brand?.name || "无品牌"}</div></td><td>{product.product_variants?.length ?? 0}</td><td><StatusBadge value={workflow} label={blockedIds.has(product.id) ? "发布受阻" : workflow}/></td><td>{publicationCount} 个已发布</td><td>{new Date(product.updated_at).toLocaleDateString("zh-CN")}</td><td><Link href={`/admin/products/${product.id}`} aria-label="打开商品"><ArrowRight size={15}/></Link></td></tr>;
       })}</tbody></table></div> : <EmptyState title="当前队列没有商品" description="调整筛选条件，或创建新的商品草稿。"/>}
       <div className="panel-body" style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}><button className="button small" disabled={page <= 1} onClick={() => setPage((value) => value - 1)}>上一页</button><span className="muted" style={{ padding: 8 }}>{page} / {pages}</span><button className="button small" disabled={page >= pages} onClick={() => setPage((value) => value + 1)}>下一页</button></div>
     </section>
