@@ -159,8 +159,8 @@ export default function ProductOperationsDetailPage() {
     if (!/^[A-Z0-9_-]{2,100}$/.test(sku)) { setMessage("SKU 格式无效。"); return; }
     setWorking(true); setMessage("");
     const { error } = await client.rpc("rpc_upsert_product_variant", {
-      p_product_id: id, p_variant_id: null, p_color_id: variant.color_id, p_size_id: variant.size_id,
-      p_sku: sku, p_barcode: variant.barcode || null, p_is_active: true,
+      p_product_id: id, p_color_id: variant.color_id, p_size_id: variant.size_id,
+      p_sku: sku, ...(variant.barcode ? { p_barcode: variant.barcode } : {}), p_is_active: true,
       p_is_visible_online: variant.is_visible_online, p_sort_order: product?.product_variants?.length ?? 0,
     });
     setWorking(false);
@@ -174,7 +174,7 @@ export default function ProductOperationsDetailPage() {
     setWorking(true);
     const { error } = await client.rpc("rpc_upsert_product_variant", {
       p_product_id: id, p_variant_id: current.id, p_color_id: current.color_id, p_size_id: current.size_id,
-      p_sku: current.sku, p_barcode: current.barcode, p_is_active: current.is_active,
+      p_sku: current.sku, ...(current.barcode ? { p_barcode: current.barcode } : {}), p_is_active: current.is_active,
       p_is_visible_online: nextVisible, p_sort_order: current.sort_order ?? 0,
     });
     setWorking(false); setMessage(error ? friendlyError(error, "SKU 状态更新失败。") : "SKU 渠道可见性已更新");
@@ -187,10 +187,9 @@ export default function ProductOperationsDetailPage() {
     const client = getSupabase(); if (!client || !selectedChannelId) return;
     setWorking(true); setMessage("");
     const { error } = await client.rpc("rpc_set_product_channel_price", {
-      p_product_id: id, p_channel_id: selectedChannelId, p_variant_id: null,
+      p_product_id: id, p_channel_id: selectedChannelId,
       p_unit_price: parsed.data.unit_price,
-      p_compare_at_price: parsed.data.compare_at_price === "" ? null : parsed.data.compare_at_price,
-      p_valid_from: null, p_valid_until: null,
+      ...(parsed.data.compare_at_price === "" ? {} : { p_compare_at_price: parsed.data.compare_at_price }),
     });
     setWorking(false); setMessage(error ? friendlyError(error, "渠道价格保存失败。") : "渠道价格已保存");
     if (!error) void load();
@@ -202,7 +201,7 @@ export default function ProductOperationsDetailPage() {
     const result = action === "validate"
       ? await client.rpc("rpc_validate_product_publication", { p_product_id: id, p_channel_id: selectedChannelId })
       : action === "publish"
-        ? await client.rpc("rpc_publish_product_channel", { p_product_id: id, p_channel_id: selectedChannelId, p_scheduled_at: null })
+        ? await client.rpc("rpc_publish_product_channel", { p_product_id: id, p_channel_id: selectedChannelId })
         : await client.rpc("rpc_unpublish_product_channel", { p_product_id: id, p_channel_id: selectedChannelId });
     setWorking(false);
     const labels = { validate: "发布检查已完成", publish: "商品已发布到所选渠道", unpublish: "商品已从所选渠道下架" };

@@ -32,12 +32,10 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm --prefix apps/storefront ci
-        if: hashFiles('apps/storefront/package-lock.json') != ''
       - name: Block high or critical dependency vulnerabilities
         run: npm audit --audit-level=high
       - name: Block high or critical Storefront dependency vulnerabilities
         run: npm --prefix apps/storefront audit --audit-level=high
-        if: hashFiles('apps/storefront/package-lock.json') != ''
       - uses: actions/dependency-review-action@v4
         if: github.event_name == 'pull_request'
         with:

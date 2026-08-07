@@ -1,7 +1,7 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
+**/node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -11,12 +11,12 @@
 !.yarn/versions
 
 # testing
-/coverage
+**/coverage/
 
 # next.js
-/.next/
-/.vinext/
-/out/
+**/.next/
+**/.vinext/
+**/out/
 
 # misc
 .DS_Store
@@ -29,20 +29,21 @@ yarn-error.log*
 .pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
-.env*
-!.env.example
+**/.env*
+!**/.env.example
 
 # vercel
 .vercel
 
 # typescript
-next-env.d.ts
-/dist/
-/.wrangler/
-/outputs/
-/work/
-/tmp/
-*.tsbuildinfo
+**/next-env.d.ts
+**/dist/
+**/.wrangler/
+**/.netlify/
+**/outputs/
+**/work/
+**/tmp/
+**/*.tsbuildinfo
 
-# Standalone customer storefront is maintained as its own repository.
+# Legacy standalone checkout; the canonical Storefront source now lives in apps/storefront.
 /customer-store/

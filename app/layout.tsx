@@ -2,7 +2,15 @@ import type { Metadata, Viewport } from "next";
 import { Noto_Sans_SC, Plus_Jakarta_Sans } from "next/font/google";
 import { PwaInstall } from "@/components/shared/pwa-install";
 import { NetworkStatus } from "@/components/shared/network-status";
+import { EnvironmentBanner } from "@/components/shared/environment-banner";
+import { readEnvironmentConfiguration } from "@/packages/config/src/environment";
 import "./globals.css";
+
+const environment = readEnvironmentConfiguration();
+const nonProduction = environment?.appEnv !== "production";
+const environmentSuffix = environment && environment.appEnv !== "production"
+  ? ` [${environment.appEnv.toUpperCase()}]`
+  : "";
 
 const sans = Noto_Sans_SC({
   variable: "--font-sans",
@@ -17,7 +25,7 @@ const display = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
   title: {
-    default: "NEXORA 批发零售一体化系统",
+    default: `${environment?.appName ?? "NEXORA Fashion Commerce Platform"}${environmentSuffix}`,
     template: "%s · NEXORA",
   },
   description: "从供应商货单到网店订单的准确库存闭环。",
@@ -53,6 +61,9 @@ export const metadata: Metadata = {
     shortcut: "/favicon.svg",
     apple: [{ url: "/app-icon-192.png", type: "image/png", sizes: "192x192" }],
   },
+  robots: nonProduction
+    ? { index: false, follow: false, nocache: true }
+    : undefined,
 };
 
 export const viewport: Viewport = {
@@ -70,6 +81,7 @@ export default function RootLayout({
   return (
     <html lang="zh-CN">
       <body className={`${sans.variable} ${display.variable}`}>
+        <EnvironmentBanner />
         <NetworkStatus />
         {children}
         <PwaInstall />

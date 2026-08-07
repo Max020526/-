@@ -1,11 +1,26 @@
 [build]
-  command = "npm run verify:environment && npm run build:netlify"
+  command = "npm run build:netlify"
   publish = ".next"
 
 [build.environment]
   NODE_VERSION = "22.13.0"
   NETLIFY_NEXT_SKEW_PROTECTION = "true"
+  STRICT_ENV_VALIDATION = "true"
+
+[context.deploy-preview]
+  command = "npm run build:netlify"
+
+[context.deploy-preview.environment]
+  NEXT_PUBLIC_APP_ENV = "preview"
+
+[context.branch-deploy]
+  command = "npm run build:netlify"
 
 [dev]
   command = "npm run dev:netlify"
   targetPort = 3000
+
+# NEXT_PUBLIC_APP_SURFACE and all URLs/keys must be configured per Netlify site.
+# Current phase: nexora-wholesale (main/Production) and
+# nexora-wholesale-staging (develop/Staging) both build the root internal app.
+# Do not place project-specific values in this file.

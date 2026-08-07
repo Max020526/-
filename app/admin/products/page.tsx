@@ -94,7 +94,7 @@ export default function ProductOperationsPage() {
     const client = getSupabase(); if (!client) return;
     setWorking(true); setMessage("");
     const { error } = await client.rpc("rpc_bulk_update_products", {
-      p_product_ids: selected, p_action: action, p_value: value ?? null,
+      p_product_ids: selected, p_action: action, ...(value === undefined ? {} : { p_value: value }),
     });
     setWorking(false); setMessage(error ? friendlyError(error, "批量操作失败。") : `已更新 ${selected.length} 个商品`);
     if (!error) { setSelected([]); void load(); }

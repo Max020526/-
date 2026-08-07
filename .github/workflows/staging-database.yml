@@ -1,0 +1,47 @@
+name: Deploy Staging Database
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type DEPLOY_STAGING after schema drift is reconciled
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: staging-database
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    name: Migrate staging only
+    runs-on: ubuntu-latest
+    environment: staging
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.STAGING_SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.STAGING_DATABASE_PASSWORD }}
+      SUPABASE_PROJECT_REF: ${{ secrets.STAGING_SUPABASE_PROJECT_REF }}
+    steps:
+      - name: Require explicit staging confirmation
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: test "$CONFIRMATION" = "DEPLOY_STAGING"
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.111.0
+      - name: Refuse missing staging credentials
+        run: test -n "$SUPABASE_PROJECT_REF" && test -n "$SUPABASE_ACCESS_TOKEN" && test -n "$SUPABASE_DB_PASSWORD"
+      - run: supabase link --project-ref "$SUPABASE_PROJECT_REF" --password "$SUPABASE_DB_PASSWORD"
+      - name: Preview staging migration plan
+        run: supabase db push --dry-run
+      - name: Apply migrations to staging
+        run: supabase db push
+      - name: Confirm migration history
+        run: supabase migration list --linked
+
+  # Automatic push is intentionally disabled while remote migration histories
+  # are drifted. Re-enable only after docs/database/SCHEMA-DRIFT.md is resolved.

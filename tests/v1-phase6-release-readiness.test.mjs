@@ -14,13 +14,23 @@ test("Phase 6 protects immutable ledgers at the database boundary", async () => 
   assert.match(sqlTest, /views without security_invoker/);
 });
 
-test("both Netlify applications enforce environment isolation before build", async () => {
-  const [adminConfig, storeConfig] = await Promise.all([read("netlify.toml"), read("customer-store/netlify.toml")]);
-  assert.match(adminConfig, /verify:environment/);
-  assert.match(storeConfig, /verify:environment/);
+test("all Netlify application surfaces enforce environment isolation before build", async () => {
+  const [netlifyConfig, packageJson, architecture] = await Promise.all([
+    read("netlify.toml"),
+    read("package.json"),
+    read("docs/deployment/ARCHITECTURE.md"),
+  ]);
+  assert.match(netlifyConfig, /build:netlify/);
+  assert.match(packageJson, /"build:netlify"[^\n]*verify:environment/);
+  assert.match(architecture, /Admin/);
+  assert.match(architecture, /Operations/);
+  assert.match(architecture, /Storefront/);
+  assert.match(architecture, /`apps\/storefront`/);
+  const storefrontPackage = await read("apps/storefront/package.json");
+  assert.match(storefrontPackage, /nexora-studio-storefront/);
   const verifier = await read("scripts/verify-deployment-environment.mjs");
-  assert.match(verifier, /预览构建禁止连接生产 Supabase/);
-  assert.match(verifier, /service[_-]?role/);
+  assert.match(verifier, /Preview 应用只能连接 Staging Supabase 或独立 Preview Branch/);
+  assert.match(verifier, /PUBLIC_SECRET_NAME/);
 });
 
 test("release documentation separates automated evidence from production gates", async () => {

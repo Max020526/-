@@ -43,10 +43,10 @@ jobs:
       NEXT_PUBLIC_APP_NAME: NEXORA Admin Preview
       NEXT_PUBLIC_SUPABASE_URL: https://ci-preview.supabase.co
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_placeholder
-      NEXT_PUBLIC_SITE_URL: https://deploy-preview-1--nexora-admin-staging.netlify.app
-      NEXT_PUBLIC_ADMIN_URL: https://deploy-preview-1--nexora-admin-staging.netlify.app
-      NEXT_PUBLIC_OPERATIONS_URL: https://deploy-preview-1--nexora-operations-staging.netlify.app
-      NEXT_PUBLIC_STOREFRONT_URL: https://deploy-preview-1--nexora-storefront-staging.netlify.app
+      NEXT_PUBLIC_SITE_URL: https://nexora-wholesale-staging.netlify.app
+      NEXT_PUBLIC_ADMIN_URL: https://nexora-wholesale-staging.netlify.app
+      NEXT_PUBLIC_OPERATIONS_URL: https://nexora-wholesale-staging.netlify.app
+      NEXT_PUBLIC_STOREFRONT_URL: https://nexora-wholesale-staging.netlify.app
       PRODUCTION_SUPABASE_PROJECT_REF: ci-production
       STAGING_SUPABASE_PROJECT_REF: ci-staging
       PREVIEW_SUPABASE_PROJECT_REF: ci-preview
@@ -59,35 +59,15 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
-      - name: Run application tests available on develop
-        run: |
-          if test -f customer-store/package.json; then
-            npm run test
-          else
-            npm run build
-            node --test \
-              tests/rendered-html.test.mjs \
-              tests/database-foundation.test.mjs \
-              tests/security-performance-contracts.test.mjs \
-              tests/v1-phase1-baseline.test.mjs \
-              tests/v1-phase2-product-operations.test.mjs \
-              tests/v1-phase3-storefront-orders.test.mjs \
-              tests/v1-phase4-order-fulfillment-returns.test.mjs \
-              tests/v1-phase5-procurement-finance-pos.test.mjs
-            node --experimental-strip-types --test \
-              tests/parser.test.ts \
-              tests/supabase-config.test.ts \
-              tests/auth-roles.test.ts \
-              tests/inbound-validation.test.ts \
-              tests/csv.test.ts \
-              tests/friendly-error.test.ts \
-              tests/color-display.test.ts
-          fi
+      - run: npm run test
       - run: npm run build:netlify
 
   storefront:
     name: Storefront quality and build
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/storefront
     env:
       CI: "true"
       CONTEXT: deploy-preview
@@ -96,37 +76,25 @@ jobs:
       NEXT_PUBLIC_APP_NAME: NEXORA Storefront Preview
       NEXT_PUBLIC_SUPABASE_URL: https://ci-preview.supabase.co
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_placeholder
-      NEXT_PUBLIC_SITE_URL: https://deploy-preview-1--nexora-storefront-staging.netlify.app
-      NEXT_PUBLIC_ADMIN_URL: https://deploy-preview-1--nexora-admin-staging.netlify.app
-      NEXT_PUBLIC_STOREFRONT_URL: https://deploy-preview-1--nexora-storefront-staging.netlify.app
+      NEXT_PUBLIC_SITE_URL: https://nexora-wholesale-staging.netlify.app
+      NEXT_PUBLIC_ADMIN_URL: https://nexora-wholesale-staging.netlify.app
+      NEXT_PUBLIC_STOREFRONT_URL: https://nexora-wholesale-staging.netlify.app
       PRODUCTION_SUPABASE_PROJECT_REF: ci-production
       STAGING_SUPABASE_PROJECT_REF: ci-staging
       PREVIEW_SUPABASE_PROJECT_REF: ci-preview
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        if: hashFiles('apps/storefront/package-lock.json') != ''
         with:
           node-version: 22.13.0
           cache: npm
           cache-dependency-path: apps/storefront/package-lock.json
-      - name: Install Storefront dependencies
-        if: hashFiles('apps/storefront/package-lock.json') != ''
-        working-directory: apps/storefront
-        run: npm ci
-      - name: Verify Storefront when present
-        if: hashFiles('apps/storefront/package-lock.json') != ''
-        working-directory: apps/storefront
-        run: |
-          npm run lint
-          npm run typecheck
-          npm run test
-          npm run verify:environment
-          npm run build:netlify
-      - name: Record Storefront ownership by Draft architecture PR
-        if: hashFiles('apps/storefront/package-lock.json') == ''
-        run: |
-          echo "apps/storefront is not present on develop; the Draft architecture PR owns that integration."
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test
+      - run: npm run verify:environment
+      - run: npm run build:netlify
 
   database:
     name: Migration and database tests
@@ -136,6 +104,8 @@ jobs:
       - uses: supabase/setup-cli@v1
         with:
           version: 2.111.0
+      - name: Validate canonical seed mirror
+        run: cmp supabase/seed.sql supabase/seeds/base.sql
       - name: Start isolated local Supabase
         run: supabase start
       - name: Replay every migration from zero

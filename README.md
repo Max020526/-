@@ -1,13 +1,16 @@
 # NEXORA Fashion Commerce Platform V1.0
 
-NEXORA 是一个统一数据库、多职责工作区的服装零售商业平台。当前已完成入库、商品运营、安全零售商城、订单履约、退货退款、采购、经营财务、老板看板和基础 POS。
+NEXORA 是服装零售商业平台。部署生命周期严格分为 Local、Staging 和 Production；Admin、Operations 与 Storefront 使用独立 Netlify 站点，并按生命周期连接独立 Supabase 项目。
+
+> 当前处于兼容迁移阶段：GitHub 根目录仍是合并式 Admin/Operations 应用；原版顾客商城已安全归档到 `apps/storefront`。`apps/admin`、`apps/operations` 仍是边界占位目录，不可直接部署。完整现状见 [`docs/deployment/ARCHITECTURE.md`](docs/deployment/ARCHITECTURE.md)。
 
 ## 技术栈
 
 - Next.js 16、React 19、TypeScript、Tailwind CSS、App Router
 - Supabase PostgreSQL、Auth、Storage、RLS、PostgreSQL RPC
 - Netlify 构建准备；数据库使用 Supabase Cloud
-- 独立顾客商城位于 `customer-store/`，与内部端共用同一 Supabase 数据库，但使用独立 Git 仓库
+- 正式和测试 Supabase Database/Auth/Storage 完全隔离
+- 原版顾客商城源码位于 `apps/storefront`，有独立锁文件、测试和 Netlify 构建配置
 
 ## 工作区
 
@@ -35,22 +38,15 @@ Copy-Item .env.example .env.local
 npm run dev:netlify
 ```
 
-独立顾客商城：
+将 `.env.local` 连接到 Supabase CLI (`http://127.0.0.1:54321`)。临时连接远程 Staging 必须显式设置 `ALLOW_REMOTE_STAGING_FOR_LOCAL=true`；Local 永远不能连接 Production。不要把 service role 或 secret key 放入 `NEXT_PUBLIC_*`。
 
-```powershell
-cd customer-store
-npm install
-Copy-Item .env.example .env.local
-npm run dev:netlify
-```
-
-不要把 service role 或 secret key 放入 `NEXT_PUBLIC_*`。浏览器只使用 Supabase URL 和 publishable key。
+换电脑时从 GitHub 克隆 `develop`，不要复制旧电脑的 `node_modules`、`.next` 或真实 `.env`。完整流程见 [`NEW-COMPUTER-SETUP.md`](docs/development/NEW-COMPUTER-SETUP.md)。商城依赖单独安装：`npm --prefix apps/storefront ci`。
 
 ## Supabase 初始化
 
 1. 创建 Supabase 项目并安装 Supabase CLI。
 2. 将根目录 `supabase/migrations/` 按时间顺序应用到开发项目。
-3. 运行 `supabase/seed.sql`；Seed 仅包含角色、颜色、尺码等参考数据，不包含模拟订单或库存。
+3. 本地 reset 会依次运行 `supabase/seeds/base.sql` 与 `supabase/seeds/staging.sql`；Production 工作流不会运行任何 seed。
 4. 创建第一个内部 Owner 后，在 `/settings/users` 分配其他岗位。
 5. 在 Auth 控制台启用泄露密码检测，并为 Owner/System Admin 配置 MFA。
 6. 保持 `product-images` Storage bucket 为 Private。
@@ -95,20 +91,29 @@ npm run typecheck
 npm run verify:environment
 npm test
 npm run build:netlify
-
-cd customer-store
-npm run lint
-npm run typecheck
-npm run verify:environment
-npm test
-npm run build:netlify
 ```
 
 数据库 A08–A13 行为测试位于 `supabase/tests/`。它们在事务中临时建立商品、库存、订单、采购、费用与 POS 数据，断言完成后执行 `ROLLBACK`。
 
-## Netlify 部署准备
+## 部署治理
 
-两个仓库均提供 `netlify.toml`，构建命令会先运行 `npm run verify:environment`，再运行 `npm run build:netlify`。Preview/Branch Deploy 必须连接非生产 Supabase 项目。部署前必须：
+所有构建先运行环境门禁。Preview/Branch Deploy 必须连接非生产 Supabase；main/Production 和 develop/Staging 的分支、URL、项目 ref 不匹配时构建直接失败。非 Production 显示环境横幅并禁止搜索引擎收录。
+
+部署文档：
+
+- [`ENVIRONMENT-MATRIX.md`](docs/deployment/ENVIRONMENT-MATRIX.md)
+- [`GITHUB-BRANCHING.md`](docs/deployment/GITHUB-BRANCHING.md)
+- [`NETLIFY-SETUP.md`](docs/deployment/NETLIFY-SETUP.md)
+- [`SUPABASE-ENVIRONMENTS.md`](docs/deployment/SUPABASE-ENVIRONMENTS.md)
+- [`DATABASE-MIGRATION.md`](docs/deployment/DATABASE-MIGRATION.md)
+- [`PRODUCTION-DEPLOYMENT.md`](docs/deployment/PRODUCTION-DEPLOYMENT.md)
+- [`ROLLBACK.md`](docs/deployment/ROLLBACK.md)
+- [`SECRETS-MANAGEMENT.md`](docs/deployment/SECRETS-MANAGEMENT.md)
+- [`RELEASE-CHECKLIST.md`](docs/deployment/RELEASE-CHECKLIST.md)
+- [`NEW-COMPUTER-SETUP.md`](docs/development/NEW-COMPUTER-SETUP.md)
+- [`RESTORE-PROCEDURE.md`](docs/backup/RESTORE-PROCEDURE.md)
+
+部署前必须：
 
 1. 备份数据库并演练回滚。
 2. 运行全部 migration、RLS/RPC 测试及 Supabase Security/Performance Advisors。
@@ -116,7 +121,7 @@ npm run build:netlify
 4. 核对域名、环境变量和 Auth Redirect URLs。
 5. 获得明确的正式上线授权。
 
-本阶段没有执行 Netlify/Sites 正式部署，没有创建收费资源，也没有写入真实或演示业务数据。
+本阶段没有执行 Netlify/Sites 正式部署，没有创建远程项目，也没有写入正式业务数据。
 
 ## 第六阶段：发布准备
 
