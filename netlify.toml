@@ -21,4 +21,6 @@
   targetPort = 3000
 
 # NEXT_PUBLIC_APP_SURFACE and all URLs/keys must be configured per Netlify site.
-# Do not place project-specific values in this file: six sites share it.
+# Current phase: nexora-wholesale (main/Production) and
+# nexora-wholesale-staging (develop/Staging) both build the root internal app.
+# Do not place project-specific values in this file.

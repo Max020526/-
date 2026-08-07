@@ -2,35 +2,35 @@
 
 ## Required topology
 
-NEXORA uses three isolated lifecycle environments and three deployable application surfaces. Wholesale remains reserved.
+NEXORA uses three isolated lifecycle environments. During internal testing, Admin and Operations remain route groups in one deployable root application. Storefront and Wholesale remain separate future surfaces.
 
-| Lifecycle | Admin | Operations | Storefront | Supabase |
-|---|---|---|---|---|
-| Local | local process | local process | local process | Supabase CLI |
-| Preview | Netlify Deploy Preview | Netlify Deploy Preview | Netlify Deploy Preview | Supabase Preview Branch or Staging |
-| Staging | dedicated site | dedicated site | dedicated site | dedicated Staging project |
-| Production | dedicated site | dedicated site | dedicated site | dedicated Production project |
+| Lifecycle | Internal application | Storefront | Supabase |
+|---|---|---|---|
+| Local | root Next.js process | independent local process when needed | Supabase CLI |
+| Preview | CI; Netlify Deploy Preview optional | CI only until deployment approval | Supabase Preview Branch or Staging |
+| Staging | `nexora-wholesale-staging` | deferred | `nexora-fashion-staging` |
+| Production | `nexora-wholesale` | existing customer site remains unchanged | Production Supabase |
 
 Auth, Storage, Edge Functions, data and API keys are isolated because Staging and Production are separate Supabase projects. Sharing a database and relying on a data flag is not acceptable isolation.
 
-## Current repository state (2026-08-06)
+## Current repository state (2026-08-07)
 
 - GitHub repository: `Max020526/WholesaleSystem`, public, single repository.
-- `main` exists remotely; this change creates `develop` from the current `main` baseline before opening the governance PR.
+- `main` and `develop` exist remotely and are protected by the approved PR/CI flow.
 - The root Next.js application combines Admin, Operations and legacy shop routes.
 - The approved original storefront was previously local-only in a nested repository and is now preserved under `apps/storefront` without its caches, dependencies or nested Git metadata.
-- Netlify has one Git-connected `nexora-wholesale` production site and one paused/manual `nexora-store-test` site.
-- Deploy Previews are disabled on the current production site (`skip_prs=true`).
-- The current production Netlify site is configured with the Staging Supabase URL. This must be corrected before the new build guard is deployed.
-- Production and Staging Supabase projects exist and are separate, but their migration histories have drifted from each other and from the 50 migration files currently in Git.
+- Netlify has one Git-connected `nexora-wholesale` production site, one paused/manual `nexora-store-test` site and an undeployed `nexora-wholesale-staging` site.
+- Deploy Previews remain optional and are currently disabled.
+- The new `nexora-fashion-staging` project has the 61 canonical migrations and isolated test seed/accounts. Production was not modified during reconciliation.
+- `nexora-wholesale-staging` still needs its Git link and new Staging Supabase environment values before first deployment.
 
 ## Compatibility migration
 
 The target is a monorepo, but moving every route in one deployment-governance PR would mix infrastructure work with high-risk business changes. The transition is therefore explicit:
 
 1. This PR adds shared environment validation, banners, robots protection, CI, seed separation and deployment documentation.
-2. Until extraction, temporary Admin and Operations sites may build the root app and set `NEXT_PUBLIC_APP_SURFACE` to their matching surface.
-3. This governance PR preserves the original Storefront source in `apps/storefront`; a dedicated UI/functional PR must still validate it before any Storefront Netlify site is repointed.
+2. Until extraction, one `nexora-wholesale-staging` site builds the root app. `NEXT_PUBLIC_APP_SURFACE=admin` identifies the internal host but does not remove Warehouse, Inventory or Product routes.
+3. This governance PR preserves the original Storefront source in `apps/storefront`; no Storefront Staging Netlify site is created in the current phase.
 4. Admin and Operations are extracted only after route, auth, RBAC and end-to-end parity tests exist.
 5. Netlify base directories change to `apps/*` only after those packages build independently.
 
@@ -50,8 +50,8 @@ The target is a monorepo, but moving every route in one deployment-governance PR
 ## Data flow
 
 ```text
-feature/fix/chore -> PR -> CI + Deploy Preview -> develop
-develop -> Staging Supabase + three Staging sites -> UAT
+feature/fix/chore -> PR -> GitHub CI -> develop
+develop -> nexora-fashion-staging + nexora-wholesale-staging -> internal UAT
 develop -> release PR -> main -> production approval
 production approval -> backup verified -> migrations -> health checks -> frontends
 ```

@@ -1,101 +1,109 @@
 # Netlify setup
 
-## Target sites
+## Approved compatibility-phase topology
 
-| Site | Branch | Surface | Suggested domain |
+| Site | Branch | Source | Purpose |
 |---|---|---|---|
-| nexora-admin-production | main | admin | admin.nexora.example |
-| nexora-operations-production | main | operations | operations.nexora.example |
-| nexora-storefront-production | main | storefront | www.nexora.example |
-| nexora-admin-staging | develop | admin | admin-staging.nexora.example |
-| nexora-operations-staging | develop | operations | operations-staging.nexora.example |
-| nexora-storefront-staging | develop | storefront | shop-staging.nexora.example |
+| `nexora-wholesale` | `main` | repository root | existing Production internal system; unchanged by Staging work |
+| `nexora-wholesale-staging` | `develop` | repository root | unified internal Staging system |
 
-Until Admin/Operations extraction is complete, their temporary sites leave Base directory empty and use the matching `NEXT_PUBLIC_APP_SURFACE`; do not point them at the placeholder folders. The approved original Storefront source is preserved at `apps/storefront`, so its two sites use that Base directory after this Draft PR passes CI and Staging review. Never publish the root legacy `/shop` routes as the customer website.
+The root Next.js application currently owns Admin, Warehouse, Inventory, Product, Purchasing, Orders, Finance and Settings routes. RBAC, permissions, warehouse scope and category scope decide what each signed-in employee can see and operate. A logical workspace is not a separate deployable application.
 
-## Current remote findings — 2026-08-06 read-only audit
+Do not create `nexora-admin-staging`, `nexora-operations-staging`, `nexora-storefront-staging` or B2B Staging in this phase. Reconsider separate sites only after `apps/admin` or `apps/operations` contains an independently buildable package with its own UI/PWA or release lifecycle. The independent Storefront source remains in `apps/storefront`, but its Staging/Production Netlify rollout is deferred.
 
-- `nexora-wholesale` is Git-connected to `Max020526/WholesaleSystem`, Production branch `main`, base `/`, build `npm run verify:environment && npm run build:netlify`, publish `.next`.
-- Netlify UI reports Node `24.x`, while version-controlled `netlify.toml` requires `22.13.0`; explicitly set `NODE_VERSION=22.13.0` to remove this ambiguity.
-- Branch deploys are disabled and Deploy Previews are set to “Don’t deploy pull requests”. This is why PR #16 has no Netlify Preview check.
-- Deploy logs are public, and “All deployment methods can deploy to production” is enabled. This conflicts with Git-only controlled publishing and must be tightened before Production release.
-- `NEXT_PUBLIC_SUPABASE_URL` is correctly context-separated now: Production targets Production Supabase; Deploy Previews and Branch deploys target Staging Supabase.
-- The site is still missing required guards/identity variables such as `NEXT_PUBLIC_APP_ENV`, `NEXT_PUBLIC_APP_SURFACE`, `NEXT_PUBLIC_APP_NAME`, `STAGING_SUPABASE_PROJECT_REF` and cross-app URLs. The new strict build will fail until they are added per context.
-- `nexora-store-test` was manually deployed from CLI, is paused and is not an acceptable long-term Staging site.
-- No dedicated Staging Admin/Operations site exists.
+## Remote audit — 2026-08-07
 
-## Create/configure each site
+- `nexora-wholesale-staging` already exists with project ID `dc319a74-3560-4711-9660-2da58e4870a5` and URL `https://nexora-wholesale-staging.netlify.app`.
+- It has never been deployed and is not linked to a Git repository.
+- Production and Deploy Preview visibility are currently Public.
+- Environment-variable names are present, but the Staging site's Production deploy context still points to the old Staging Supabase project `iucikdtxpwnvhdcpulqa`.
+- The approved replacement Staging project is `hpyhxljzsppocknycilz`; do not deploy until both the URL and publishable key use that project and the guard ref is updated.
+- Deploy Preview is not required during the single-Staging phase and may remain disabled.
+- `nexora-wholesale` remains the existing Production site and must not be changed while configuring Staging.
+- `nexora-store-test` is a paused CLI/manual site and is not an approved long-term environment.
 
-1. Add new site → Import from Git → `Max020526/WholesaleSystem`.
-2. Set production branch to `main` for Production sites or `develop` for Staging sites.
-3. During compatibility phase, Admin/Operations use base directory `/` (repository root). Storefront uses base directory `apps/storefront` only after its integration PR is approved. Build command is `npm run build:netlify`, publish directory `.next`.
-4. Set Node `22.13.0`.
-5. Configure the variables from `ENVIRONMENT-MATRIX.md`; never copy all variables between Staging and Production.
-6. Enable Deploy Previews for PRs on the three Staging sites. Their Preview context must use `NEXT_PUBLIC_APP_ENV=preview` and Staging/Preview Supabase credentials.
-7. Disable Deploy Previews on Production sites or explicitly scope their Preview context to Staging credentials. Never inherit Production values into Deploy Preview.
-8. Add password/SSO protection to Staging and do not publish Staging addresses on the public storefront.
-9. Confirm `/robots.txt`, `X-Robots-Tag` and the visible banner on Staging/Preview.
-10. Under **Build & deploy → Build settings**, change Deploy log visibility to private/team-only where the plan allows it.
-11. Under **Build & deploy → Enforce deployment methods**, restrict Production publishing to the approved Git workflow; do not leave CLI/API/MCP/manual deploys able to overwrite Production.
+## Exact unified Staging configuration
 
-## Exact Staging fields
-
-### `nexora-admin-staging`
+Configure the existing `nexora-wholesale-staging` project:
 
 - Repository: `Max020526/WholesaleSystem`
-- Production branch for this Staging site: `develop`
-- Base directory: `/`
+- Production branch for this Netlify project: `develop`
+- Base directory: repository root / empty
 - Build command: `npm run build:netlify`
 - Publish directory: `.next`
-- Node: `22.13.0`
-- `NEXT_PUBLIC_APP_ENV=staging`
-- `NEXT_PUBLIC_APP_SURFACE=admin`
-- Add the remaining variables from `ENVIRONMENT-MATRIX.md` using only Staging values.
+- Node.js: `22.13.0`
+- Deploy Preview: disabled for now
+- Branch deploys: disabled unless explicitly needed later
+- Production visibility: Private while only the Netlify Team Owner performs UAT
+- Deploy Preview visibility: Private
 
-### `nexora-operations-staging`
+On Netlify Personal, a private project can be viewed by the Team Owner. Shared password protection requires Pro; if external testers need access without Netlify membership, keep application Auth/RLS enabled and reassess the access plan before sharing the URL.
 
-- Repository/branch/base/build/publish/Node: same as Admin Staging.
-- `NEXT_PUBLIC_APP_ENV=staging`
-- `NEXT_PUBLIC_APP_SURFACE=operations`
-- Add Staging Admin URL and Staging Supabase values.
+## Required Staging variables
 
-### Deploy Preview contexts
-
-- Enable **Project configuration → Build & deploy → Branches and deploy contexts → Deploy Previews → Any pull request against your production branch** on the two Staging sites.
-- Set Preview context `NEXT_PUBLIC_APP_ENV=preview`.
-- Preview Supabase URL/key must be Staging or an isolated Preview Branch; never inherit Production.
-- Enable password/SSO protection under **Project configuration → Visitor access** when available.
-
-Do not create/connect a Storefront Netlify site in this governance PR. Although `apps/storefront` now contains the preserved source, it is not approved until CI, migration reconciliation and a dedicated integration review pass.
-
-## Variable templates
-
-Production Admin example (values are placeholders):
+The Netlify “Production” context below means the primary deploy of this Staging project. It must still contain only Staging values.
 
 ```text
-NEXT_PUBLIC_APP_ENV=production
+NEXT_PUBLIC_APP_ENV=staging
 NEXT_PUBLIC_APP_SURFACE=admin
-NEXT_PUBLIC_APP_NAME=NEXORA Admin
-NEXT_PUBLIC_SUPABASE_URL=<production-url>
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<production-publishable-key>
-NEXT_PUBLIC_SITE_URL=<production-admin-url>
-NEXT_PUBLIC_STOREFRONT_URL=<production-storefront-url>
-PRODUCTION_SUPABASE_PROJECT_REF=<production-ref>
-STAGING_SUPABASE_PROJECT_REF=<staging-ref>
-SUPABASE_SECRET_KEY=<production-server-secret>
+NEXT_PUBLIC_APP_NAME=NEXORA Internal Staging
+NEXT_PUBLIC_SUPABASE_URL=https://hpyhxljzsppocknycilz.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=<new-staging-publishable-key>
+NEXT_PUBLIC_SITE_URL=https://nexora-wholesale-staging.netlify.app
+NEXT_PUBLIC_ADMIN_URL=https://nexora-wholesale-staging.netlify.app
+NEXT_PUBLIC_OPERATIONS_URL=https://nexora-wholesale-staging.netlify.app
+NEXT_PUBLIC_STOREFRONT_URL=https://nexora-wholesale-staging.netlify.app
+PRODUCTION_SUPABASE_PROJECT_REF=<production-project-ref-guard-only>
+STAGING_SUPABASE_PROJECT_REF=hpyhxljzsppocknycilz
+STRICT_ENV_VALIDATION=true
+SUPABASE_SECRET_KEY=<new-staging-server-secret>
 ```
 
-Staging values follow the same shape with `APP_ENV=staging`, Staging URLs/keys and a Staging-only server secret.
+`NEXT_PUBLIC_APP_SURFACE=admin` is the compatibility identifier for the unified internal root application. It does not disable `/warehouse`, `/inbound`, `/inventory` or `/products`; those routes remain controlled by Supabase Auth, RBAC and RLS.
 
-## Migration-first production publishing
+Never copy Production values into this project. `SUPABASE_SECRET_KEY` is server-only and must never use a `NEXT_PUBLIC_` prefix.
 
-During the transition, stop automatic Production publishing. After the approved database workflow succeeds, trigger locked Production frontend deploys in Admin → Operations → Storefront order. Re-enable automatic Git publishing only when one release workflow can guarantee the database-first order.
+## Staging behavior already enforced by code
 
-## Verification
+- A visible `STAGING 测试环境 — 当前数据不会进入正式系统` banner appears when `NEXT_PUBLIC_APP_ENV=staging`.
+- Non-Production metadata sets `noindex` and `nofollow`.
+- `robots.txt` disallows all crawling outside the Production Storefront.
+- Every Staging response sends `X-Robots-Tag: noindex, nofollow, noarchive`.
+- Build validation stops Staging if its Supabase URL/ref does not match the declared Staging project.
+- Build validation stops Production URLs/refs from being used by Staging.
 
-- Site deploy log prints `NEXORA 环境检查通过: environment/surface`.
-- Main + Staging URL fails the build.
-- Develop + Production URL fails the build.
-- Deploy Preview + Production URL fails the build.
-- Refreshing deep links does not produce a 404.
-- Staging/Preview has noindex and Production Storefront is indexable.
+## Git-connected deployment flow
+
+```text
+feature/* or fix/*
+  -> Pull Request to develop
+  -> GitHub CI passes
+  -> merge to develop after approval
+  -> nexora-wholesale-staging builds automatically
+  -> internal UAT
+```
+
+Do not use Netlify Drop, CLI production deploys or manual folder uploads for the Staging source of truth. Deploy Preview remains optional and disabled until concurrent PR testing is needed.
+
+## Supabase and external-service safeguards
+
+- Staging connects only to `nexora-fashion-staging` (`hpyhxljzsppocknycilz`).
+- Staging Auth Site URL and Redirect URLs use `https://nexora-wholesale-staging.netlify.app`.
+- Test email uses a sandbox/test recipient strategy; do not send to real customers.
+- Payment remains test/manual and must not contain Production secrets.
+- Logistics integrations remain disabled or use test endpoints.
+- Test records use `TEST-*` identifiers and never copy Production customer data.
+
+## Verification before UAT
+
+- GitHub repository is linked and the site branch is `develop`.
+- First build log reports `NEXORA 环境检查通过：staging/admin`.
+- `/`, `/login`, `/admin`, `/warehouse`, `/inbound`, `/inventory`, `/products` and `/settings/users` refresh without 404.
+- The STAGING banner is visible on desktop and mobile.
+- `/robots.txt` disallows crawling and responses include `X-Robots-Tag: noindex, nofollow, noarchive`.
+- Owner, Warehouse Manager and Product Operator see only their RBAC-authorized modules.
+- Browser requests use `hpyhxljzsppocknycilz.supabase.co` and never the Production or old Staging project.
+- Employee registration/server routes use only the new Staging server secret.
+- No real email, payment or logistics event is emitted.
+
+Only after these checks pass should the inbound → product completion → approval → publish end-to-end test begin. Production deployment and PR merge remain separate approvals.

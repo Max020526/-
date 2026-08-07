@@ -43,10 +43,10 @@ jobs:
       NEXT_PUBLIC_APP_NAME: NEXORA Admin Preview
       NEXT_PUBLIC_SUPABASE_URL: https://ci-preview.supabase.co
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_placeholder
-      NEXT_PUBLIC_SITE_URL: https://deploy-preview-1--nexora-admin-staging.netlify.app
-      NEXT_PUBLIC_ADMIN_URL: https://deploy-preview-1--nexora-admin-staging.netlify.app
-      NEXT_PUBLIC_OPERATIONS_URL: https://deploy-preview-1--nexora-operations-staging.netlify.app
-      NEXT_PUBLIC_STOREFRONT_URL: https://deploy-preview-1--nexora-storefront-staging.netlify.app
+      NEXT_PUBLIC_SITE_URL: https://nexora-wholesale-staging.netlify.app
+      NEXT_PUBLIC_ADMIN_URL: https://nexora-wholesale-staging.netlify.app
+      NEXT_PUBLIC_OPERATIONS_URL: https://nexora-wholesale-staging.netlify.app
+      NEXT_PUBLIC_STOREFRONT_URL: https://nexora-wholesale-staging.netlify.app
       PRODUCTION_SUPABASE_PROJECT_REF: ci-production
       STAGING_SUPABASE_PROJECT_REF: ci-staging
       PREVIEW_SUPABASE_PROJECT_REF: ci-preview
@@ -76,9 +76,9 @@ jobs:
       NEXT_PUBLIC_APP_NAME: NEXORA Storefront Preview
       NEXT_PUBLIC_SUPABASE_URL: https://ci-preview.supabase.co
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_placeholder
-      NEXT_PUBLIC_SITE_URL: https://deploy-preview-1--nexora-storefront-staging.netlify.app
-      NEXT_PUBLIC_ADMIN_URL: https://deploy-preview-1--nexora-admin-staging.netlify.app
-      NEXT_PUBLIC_STOREFRONT_URL: https://deploy-preview-1--nexora-storefront-staging.netlify.app
+      NEXT_PUBLIC_SITE_URL: https://nexora-wholesale-staging.netlify.app
+      NEXT_PUBLIC_ADMIN_URL: https://nexora-wholesale-staging.netlify.app
+      NEXT_PUBLIC_STOREFRONT_URL: https://nexora-wholesale-staging.netlify.app
       PRODUCTION_SUPABASE_PROJECT_REF: ci-production
       STAGING_SUPABASE_PROJECT_REF: ci-staging
       PREVIEW_SUPABASE_PROJECT_REF: ci-preview
